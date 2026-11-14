@@ -1,0 +1,456 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cc-bg: #e9edf4;
+  --cc-ink: #151921;
+  --cc-accent: #e4572e;
+  --cc-navy: #1b2a41;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--cc-ink);
+  background:
+    radial-gradient(900px 480px at 8% -10%, rgba(228, 87, 46, 0.12), transparent 55%),
+    radial-gradient(760px 420px at 100% 0%, rgba(27, 42, 65, 0.12), transparent 50%),
+    linear-gradient(180deg, #f7f8fb 0%, #e9edf4 45%, #e4e9f2 100%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(228, 87, 46, 0.2);
+}
+
+@layer components {
+  .cc-interactive {
+    @apply transition-all duration-[180ms] ease-premium;
+  }
+
+  .cc-interactive:hover {
+    @apply -translate-y-0.5;
+  }
+
+  .cc-interactive:active {
+    @apply translate-y-0 scale-[0.985];
+  }
+
+  .cc-pressable {
+    transition:
+      transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms ease,
+      background-color 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .cc-pressable:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .cc-pressable:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .cc-pressable:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .cc-pressable:focus-visible {
+    outline: 2px solid #0f8f96;
+    outline-offset: 2px;
+  }
+
+  .cc-select {
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .cc-select:focus {
+    border-color: #0f8f96;
+    box-shadow: 0 0 0 3px rgba(15, 143, 150, 0.15);
+  }
+}
+
+/* Custom cursor: hide system pointer on fine pointers when enabled */
+html.cc-cursor-on,
+html.cc-cursor-on * {
+  cursor: none !important;
+}
+
+html.cc-cursor-on input,
+html.cc-cursor-on textarea,
+html.cc-cursor-on select,
+html.cc-cursor-on [contenteditable="true"],
+html.cc-cursor-on [contenteditable=""] {
+  cursor: text !important;
+}
+
+@media (pointer: coarse), (hover: none) {
+  html.cc-cursor-on,
+  html.cc-cursor-on * {
+    cursor: auto !important;
+  }
+}
+
+@layer utilities {
+  .cc-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #b0b9c9 transparent;
+  }
+
+  .cc-surface {
+    background: linear-gradient(165deg, #ffffff 0%, #f4f6fa 100%);
+    border: 1px solid rgba(213, 218, 227, 0.95);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.95) inset,
+      0 18px 48px rgba(21, 25, 33, 0.07);
+  }
+
+  .cc-amount {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .cc-stagger > * {
+    animation: cc-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .cc-stagger > *:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  .cc-stagger > *:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  .cc-stagger > *:nth-child(3) {
+    animation-delay: 0.19s;
+  }
+  .cc-stagger > *:nth-child(4) {
+    animation-delay: 0.26s;
+  }
+
+  .cc-fade-up {
+    animation: cc-fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .cc-fade-up-delay {
+    animation: cc-fade-up 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+  }
+
+  .cc-scale-in {
+    animation: cc-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .cc-float {
+    animation: cc-float 7s ease-in-out infinite;
+  }
+
+  .cc-float-slow {
+    animation: cc-float 10s ease-in-out infinite reverse;
+  }
+
+  .cc-shimmer {
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.65) 45%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: cc-shimmer 2.2s ease-in-out infinite;
+  }
+
+  .cc-btn-ready {
+    animation: cc-btn-pulse 2.4s ease-in-out infinite;
+  }
+
+  .cc-orb {
+    animation: cc-orb 4.8s ease-in-out infinite;
+  }
+
+  .cc-underline-grow {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 2px;
+    transition: background-size 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .cc-underline-grow:hover {
+    background-size: 100% 2px;
+  }
+}
+
+@keyframes cc-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cc-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cc-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(0.4deg);
+  }
+}
+
+@keyframes cc-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes cc-btn-pulse {
+  0%,
+  100% {
+    box-shadow: 0 12px 28px rgba(197, 61, 28, 0.25);
+  }
+  50% {
+    box-shadow: 0 16px 36px rgba(197, 61, 28, 0.4);
+  }
+}
+
+@keyframes cc-orb {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+@keyframes cc-pulse-soft {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cc-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes cc-sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes cc-highlight-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(15, 143, 150, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(15, 143, 150, 0.08);
+  }
+}
+
+@keyframes cc-scan {
+  0% {
+    top: -10%;
+  }
+  100% {
+    top: 95%;
+  }
+}
+
+@keyframes cc-ripple {
+  from {
+    transform: scale(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes cc-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes cc-expand-fade {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    max-height: 320px;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cc-doc-to-data {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cc-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cc-sweep {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.cc-speaking-dot {
+  animation: cc-pulse-soft 1.35s ease-in-out infinite;
+}
+
+.cc-wave-bar {
+  transform-origin: center bottom;
+  animation: cc-wave 1.05s ease-in-out infinite;
+}
+
+.cc-mark-sheen {
+  background-size: 200% 200%;
+  animation: cc-sheen 7s ease-in-out infinite alternate;
+}
+
+.cc-active-card {
+  animation: cc-highlight-breathe 2.2s ease-in-out infinite;
+}
+
+.cc-tip-enter {
+  animation: cc-slide-down 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cc-page-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 65%
+  );
+  animation: cc-sweep 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cc-scan-line {
+  animation: cc-scan 1.6s linear infinite;
+}
+
+.cc-ripple {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(15, 143, 150, 0.35);
+  pointer-events: none;
+  animation: cc-ripple 420ms ease-out forwards;
+}
+
+.cc-check-draw path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: cc-check-draw 320ms ease-out forwards;
+}
+
+.cc-evidence-open {
+  animation: cc-expand-fade 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+}
+
+.cc-doc-enter {
+  animation: cc-doc-to-data 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cc-doc-selected {
+  box-shadow: 0 0 0 2px rgba(15, 143, 150, 0.25);
+}
+
+.cc-connector {
+  background: linear-gradient(180deg, #0f8f96 0%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-scan-line,
+  .cc-btn-ready,
+  .cc-orb,
+  .cc-float,
+  .cc-float-slow,
+  .cc-active-card,
+  .cc-page-sweep::after,
+  .cc-shimmer {
+    animation: none !important;
+  }
+}
