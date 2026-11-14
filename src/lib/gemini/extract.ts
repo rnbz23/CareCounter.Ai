@@ -27,6 +27,7 @@ Return only JSON matching the supplied response schema. Do not offer advice.
 Extract only printed, visible facts. Set code to null if no billing code is printed.
 Use USD integer cents (for example, $123.45 becomes 12345). Each line's billedCents is that line's total, not a unit cost.
 Preserve a service date only when visible. If a word or number is unclear, use low extractionConfidence and add a note.
+For source anchor boxes, use normalized 0-to-1 coordinates relative to the page or image; otherwise set box to null.
 Do not hallucinate hospital names, insurers, CPT or HCPCS codes, coverage, or amounts.
 Do not return patient names, addresses, birth dates, member IDs, account numbers, or any other identifying information.
 Do not create line-item IDs; the server assigns those after validation.`;
@@ -124,10 +125,29 @@ function normalizeExtraction(value: unknown): BillExtraction {
     throw new BillExtractionError(`Gemini response failed schema validation: ${issues}`);
   }
 
-  const lineItems = parsed.data.lineItems.map((lineItem, index) => ({
-    ...lineItem,
-    id: `li_${index + 1}`,
-  }));
+  const lineItems = parsed.data.lineItems.map((lineItem, index) => {
+    const box = lineItem.anchor?.box;
+    const hasNormalizedBox =
+      box != null &&
+      box.x >= 0 &&
+      box.y >= 0 &&
+      box.w >= 0 &&
+      box.h >= 0 &&
+      box.x <= 1 &&
+      box.y <= 1 &&
+      box.w <= 1 &&
+      box.h <= 1 &&
+      box.x + box.w <= 1 &&
+      box.y + box.h <= 1;
+
+    return {
+      ...lineItem,
+      id: `li_${index + 1}`,
+      anchor: lineItem.anchor
+        ? { ...lineItem.anchor, box: hasNormalizedBox ? box : null }
+        : null,
+    };
+  });
   const lineItemTotal = lineItems.reduce((sum, lineItem) => sum + lineItem.billedCents, 0);
   const notes = [...parsed.data.notes];
   let totalBilledCents = parsed.data.totalBilledCents;

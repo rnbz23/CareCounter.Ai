@@ -94,4 +94,29 @@ describe("extractBill", () => {
     expect(result.totalBilledCents).toBe(113000);
     expect(result.notes.at(-1)).toContain("differed from the extracted line-item sum");
   });
+
+  it("drops pixel bounding boxes that violate the normalized anchor contract", async () => {
+    const pixelBoxResponse = {
+      ...validGeminiResponse,
+      lineItems: validGeminiResponse.lineItems.map((lineItem, index) =>
+        index === 0
+          ? {
+              ...lineItem,
+              anchor: {
+                page: 1,
+                quote: "Chest X-ray, two views",
+                box: { x: 319, y: 435, w: 180, h: 12 },
+              },
+            }
+          : lineItem,
+      ),
+    };
+
+    const result = await extractBill(
+      { inputType: "text", text: syntheticBillText },
+      { generateContent: mockGenerator(JSON.stringify(pixelBoxResponse)) },
+    );
+
+    expect(result.lineItems[0]?.anchor?.box).toBeNull();
+  });
 });
