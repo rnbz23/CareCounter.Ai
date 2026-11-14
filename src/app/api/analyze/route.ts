@@ -8,6 +8,7 @@ import {
   BillExtractionError,
   extractBill,
   GeminiConfigurationError,
+  GeminiProviderError,
   type ExtractBillInput,
 } from "@/lib/gemini/extract";
 
@@ -93,6 +94,14 @@ export async function POST(request: Request): Promise<Response> {
 
     if (error instanceof GeminiConfigurationError) {
       return errorResponse("GEMINI_NOT_CONFIGURED", error.message, 503);
+    }
+
+    if (error instanceof GeminiProviderError) {
+      return errorResponse(
+        error.retryable ? "GEMINI_UNAVAILABLE" : "GEMINI_REQUEST_FAILED",
+        error.message,
+        error.retryable ? 503 : 502,
+      );
     }
 
     if (error instanceof BillExtractionError) {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   BillExtractionError,
   extractBill,
+  GeminiProviderError,
   type GeminiGenerateContent,
 } from "@/lib/gemini/extract";
 
@@ -118,5 +119,38 @@ describe("extractBill", () => {
     );
 
     expect(result.lineItems[0]?.anchor?.box).toBeNull();
+  });
+
+  it("retries one transient Gemini provider failure", async () => {
+    const unavailable = Object.assign(new Error("temporarily unavailable"), { status: 503 });
+    const generateContent = vi
+      .fn<GeminiGenerateContent>()
+      .mockRejectedValueOnce(unavailable)
+      .mockResolvedValueOnce({ text: JSON.stringify(validGeminiResponse) });
+
+    const result = await extractBill(
+      { inputType: "text", text: syntheticBillText },
+      { generateContent, providerRetryDelayMs: 0 },
+    );
+
+    expect(result.totalBilledCents).toBe(113000);
+    expect(generateContent).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns a retryable provider error after two transient failures", async () => {
+    const unavailable = Object.assign(new Error("temporarily unavailable"), { status: 503 });
+    const generateContent = vi.fn<GeminiGenerateContent>().mockRejectedValue(unavailable);
+
+    await expect(
+      extractBill(
+        { inputType: "text", text: syntheticBillText },
+        { generateContent, providerRetryDelayMs: 0 },
+      ),
+    ).rejects.toMatchObject<Partial<GeminiProviderError>>({
+      name: "GeminiProviderError",
+      status: 503,
+      retryable: true,
+    });
+    expect(generateContent).toHaveBeenCalledTimes(2);
   });
 });

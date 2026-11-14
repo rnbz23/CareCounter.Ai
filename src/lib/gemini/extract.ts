@@ -50,6 +50,7 @@ export interface ExtractBillOptions {
   apiKey?: string;
   model?: string;
   generateContent?: GeminiGenerateContent;
+  providerRetryDelayMs?: number;
 }
 
 export class GeminiConfigurationError extends Error {
@@ -64,6 +65,78 @@ export class BillExtractionError extends Error {
     super(message);
     this.name = "BillExtractionError";
   }
+}
+
+export class GeminiProviderError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number | null,
+    public readonly retryable: boolean,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "GeminiProviderError";
+  }
+}
+
+function providerStatus(error: unknown): number | null {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
+  ) {
+    return error.status;
+  }
+
+  return null;
+}
+
+function isRetryableProviderError(error: unknown): boolean {
+  const status = providerStatus(error);
+  return (
+    error instanceof TypeError ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+}
+
+async function generateWithProviderRetry(
+  generateContent: GeminiGenerateContent,
+  params: GenerateContentParams,
+  retryDelayMs: number,
+): Promise<{ text?: string }> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await generateContent(params);
+    } catch (error) {
+      const retryable = isRetryableProviderError(error);
+
+      if (!retryable || attempt === 1) {
+        throw new GeminiProviderError(
+          retryable
+            ? "Gemini is temporarily unavailable. Please retry the request."
+            : "Gemini could not process the request.",
+          providerStatus(error),
+          retryable,
+          { cause: error },
+        );
+      }
+
+      if (retryDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      }
+    }
+  }
+
+  throw new GeminiProviderError(
+    "Gemini is temporarily unavailable. Please retry the request.",
+    null,
+    true,
+  );
 }
 
 async function validateInput(input: ExtractBillInput): Promise<void> {
@@ -208,15 +281,19 @@ export async function extractBill(
             },
           ];
 
-    const response = await generateContent({
-      model,
-      contents,
-      config: {
-        responseMimeType: "application/json",
-        responseJsonSchema: GEMINI_RESPONSE_JSON_SCHEMA,
-        temperature: 0,
+    const response = await generateWithProviderRetry(
+      generateContent,
+      {
+        model,
+        contents,
+        config: {
+          responseMimeType: "application/json",
+          responseJsonSchema: GEMINI_RESPONSE_JSON_SCHEMA,
+          temperature: 0,
+        },
       },
-    });
+      options.providerRetryDelayMs ?? 500,
+    );
 
     previousResponse = response.text ?? "";
 
