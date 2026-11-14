@@ -160,7 +160,7 @@ export async function extractBill(
 ): Promise<BillExtraction> {
   await validateInput(input);
 
-  const model = options.model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  const model = options.model ?? process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite";
   let generateContent = options.generateContent;
 
   if (!generateContent) {
