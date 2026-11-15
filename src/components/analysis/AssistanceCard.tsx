@@ -23,7 +23,7 @@ export function AssistanceCard({
       onActivate={onActivate}
       className="p-5"
     >
-      <span className="rounded-md bg-[#0f8f96]/12 px-2 py-0.5 text-[11px] font-semibold text-[#0d737a]">
+      <span className="rounded-md bg-cobalt-500/12 px-2 py-0.5 text-[11px] font-semibold text-cobalt-700">
         {assistanceStatusLabel(option.status)}
       </span>
       <h3 className="mt-3 font-display text-lg font-semibold text-navy-950">
@@ -51,7 +51,7 @@ export function AssistanceCard({
               href={option.contactUrl}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-[#0d737a] hover:underline"
+              className="font-medium text-cobalt-700 hover:underline"
             >
               Official program link
             </a>

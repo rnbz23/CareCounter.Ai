@@ -67,7 +67,7 @@ export function BillDocument({
     >
       <div className="flex shrink-0 items-end justify-between gap-4 px-1 text-white">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8ed3d0]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cobalt-300">
             Live bill review
           </p>
           <h2 className="mt-1 font-display text-xl font-semibold tracking-tight text-white">
@@ -79,24 +79,24 @@ export function BillDocument({
         </p>
       </div>
 
-      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-[#fffdf8] shadow-[0_30px_90px_rgba(2,10,12,0.35)] ring-1 ring-black/10">
-        <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,#0f8f96_0%,#8dc9be_52%,#e4572e_100%)]" />
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_90px_rgba(2,10,12,0.35)] ring-1 ring-black/10">
+        <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,#3b5fff_0%,#94b5ff_52%,#e4572e_100%)]" />
 
-        <header className="shrink-0 border-b border-[#e7dfcf] px-5 py-4 sm:px-7">
+        <header className="shrink-0 border-b border-ink-200 px-5 py-4 sm:px-7">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a7d68]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-500">
                 Hospital statement
               </p>
-              <h3 className="mt-1 font-display text-xl font-semibold tracking-tight text-[#18201f] sm:text-2xl">
+              <h3 className="mt-1 font-display text-xl font-semibold tracking-tight text-navy-950 sm:text-2xl">
                 {analysis.hospitalName}
               </h3>
-              <p className="mt-1 text-xs text-[#7b7060]">
+              <p className="mt-1 text-xs text-ink-500">
                 Service date {formatDate(analysis.serviceDate)} ·{" "}
                 {analysis.inputType.toUpperCase()}
               </p>
             </div>
-            <div className="rounded-xl bg-[#0b2630] px-4 py-3 text-white shadow-sm">
+            <div className="rounded-xl bg-navy-950 px-4 py-3 text-white shadow-sm">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
                 Total billed
               </p>
@@ -109,7 +109,7 @@ export function BillDocument({
 
         <div className="cc-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-5">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-[#e7dfcf] text-[10px] uppercase tracking-[0.12em] text-[#8a7d68]">
+            <thead className="border-b border-ink-200 text-[10px] uppercase tracking-[0.12em] text-ink-500">
               <tr>
                 <th className="px-2 py-2 font-semibold">Service</th>
                 <th className="px-2 py-2 font-semibold">Code</th>
@@ -129,15 +129,15 @@ export function BillDocument({
                     className={cn(
                       "relative border-b border-[#eee6d8] transition-[background-color,box-shadow] duration-300",
                       isActive
-                        ? "cc-bill-line-active bg-[#0f8f96]/[0.12] shadow-[inset_3px_0_0_#0f8f96]"
-                        : "hover:bg-[#f6f0e5]",
+                        ? "cc-bill-line-active bg-emerald-500/[0.14] shadow-[inset_3px_0_0_#0f9f6e]"
+                        : "hover:bg-emerald-50",
                     )}
                   >
                     <td className="px-2 py-3 align-top">
-                      <p className="font-medium leading-snug text-[#18201f]">
+                      <p className="font-medium leading-snug text-navy-950">
                         {item.description}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-[#8a7d68]">
+                      <p className="mt-0.5 text-[11px] text-ink-500">
                         {formatDate(item.serviceDate)}
                       </p>
                       {isActive ? (
@@ -145,8 +145,8 @@ export function BillDocument({
                           className={cn(
                             "mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                             isPrimary
-                              ? "bg-[#0d737a] text-white"
-                              : "bg-white text-[#0d737a] ring-1 ring-[#0f8f96]/20",
+                              ? "bg-emerald-700 text-white"
+                              : "bg-white text-emerald-700 ring-1 ring-emerald-500/20",
                           )}
                         >
                           {isPrimary ? (
@@ -159,13 +159,13 @@ export function BillDocument({
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-2 py-3 align-top text-[#7b7060]">
+                    <td className="px-2 py-3 align-top text-ink-500">
                       {item.code ?? "—"}
                     </td>
-                    <td className="px-2 py-3 align-top text-[#7b7060]">
+                    <td className="px-2 py-3 align-top text-ink-500">
                       {item.quantity}
                     </td>
-                    <td className="cc-amount px-2 py-3 text-right align-top font-semibold text-[#18201f]">
+                    <td className="cc-amount px-2 py-3 text-right align-top font-semibold text-navy-950">
                       {formatCents(item.billedCents)}
                     </td>
                   </tr>
@@ -178,27 +178,27 @@ export function BillDocument({
         <footer
           id={TOTAL_ID}
           className={cn(
-            "shrink-0 border-t border-[#e7dfcf] px-5 py-4 transition-[background-color,box-shadow] duration-300 sm:px-7",
+            "shrink-0 border-t border-ink-200 px-5 py-4 transition-[background-color,box-shadow] duration-300 sm:px-7",
             paymentActive
-              ? "cc-bill-total-active bg-[#0f8f96]/[0.1] shadow-[inset_3px_0_0_#0f8f96]"
-              : "bg-[#faf6ed]",
+              ? "cc-bill-total-active bg-emerald-500/[0.12] shadow-[inset_3px_0_0_#0f9f6e]"
+              : "bg-paper-muted",
           )}
         >
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8a7d68]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">
                 Total billed
               </p>
-              <p className="mt-1 text-[11px] text-[#8a7d68]">
+              <p className="mt-1 text-[11px] text-ink-500">
                 Rebuilt from the charges read from your upload.
               </p>
             </div>
-            <p className="cc-amount font-display text-xl font-semibold text-[#18201f]">
+            <p className="cc-amount font-display text-xl font-semibold text-navy-950">
               {formatCents(analysis.totalBilledCents)}
             </p>
           </div>
           {paymentActive ? (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#0d737a] px-2.5 py-1 text-[10px] font-semibold text-white">
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-cobalt-700 px-2.5 py-1 text-[10px] font-semibold text-white">
               <span
                 aria-hidden="true"
                 className="cc-speaking-dot h-1.5 w-1.5 rounded-full bg-white"

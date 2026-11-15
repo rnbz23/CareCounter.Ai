@@ -538,14 +538,14 @@ function AgentRuntimeControls({
       <header className="border-b border-slate-200 p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Your billing guide</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-cobalt-700">Your billing guide</p>
             <h2 className="text-base font-semibold text-slate-900">{languageLabel}</h2>
             <p className="text-xs text-slate-500">{analysis.hospitalName}</p>
           </div>
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
               isConnected
-                ? "bg-teal-50 text-teal-800"
+                ? "bg-cobalt-50 text-cobalt-800"
                 : status === "error"
                   ? "bg-red-50 text-red-700"
                   : "bg-slate-100 text-slate-600"
@@ -555,7 +555,7 @@ function AgentRuntimeControls({
             <span
               aria-hidden="true"
               className={`h-1.5 w-1.5 rounded-full ${
-                isConnected ? "bg-teal-500" : status === "error" ? "bg-red-500" : "bg-slate-400"
+                isConnected ? "bg-cobalt-500" : status === "error" ? "bg-red-500" : "bg-slate-400"
               }`}
             />
             {connectionLabel}
@@ -568,20 +568,20 @@ function AgentRuntimeControls({
 
       {discussion ? (
         <div
-          className="border-b border-[#0f8f96]/15 bg-[linear-gradient(90deg,#effbf9_0%,#ffffff_100%)] px-4 py-3"
+          className="border-b border-cobalt-500/15 bg-[linear-gradient(90deg,#eef4ff_0%,#ffffff_100%)] px-4 py-3"
           aria-live="polite"
         >
           <div className="flex items-start gap-2.5">
             <span
               aria-hidden="true"
-              className="cc-speaking-dot mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0f8f96]"
+              className="cc-speaking-dot mt-1.5 h-2 w-2 shrink-0 rounded-full bg-cobalt-500"
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0d737a]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cobalt-700">
                   Now discussing
                 </p>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#0d737a] ring-1 ring-[#0f8f96]/15">
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-cobalt-700 ring-1 ring-cobalt-500/15">
                   {discussion.kind}
                 </span>
               </div>
@@ -616,20 +616,20 @@ function AgentRuntimeControls({
                 className={`max-w-[92%] rounded-xl border px-3 py-2 text-sm transition-[background-color,box-shadow,border-color] duration-300 ${
                   entry.role === "agent"
                     ? isLatestAgent
-                      ? `border-[#0f8f96]/20 bg-[#f2fbfa] text-slate-800 ${
+                      ? `border-cobalt-500/20 bg-cobalt-50/80 text-slate-800 ${
                           isLive
-                            ? "shadow-[0_8px_22px_rgba(15,143,150,0.12)] ring-2 ring-[#0f8f96]/25"
+                            ? "shadow-[0_8px_22px_rgba(59,95,255,0.12)] ring-2 ring-cobalt-500/25"
                             : ""
                         }`
                       : "border-transparent bg-slate-100 text-slate-800"
-                    : "ml-auto border-transparent bg-teal-700 text-white"
+                    : "ml-auto border-transparent bg-cobalt-700 text-white"
                 }`}
               >
                 {isLive ? (
-                  <span className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d737a]">
+                  <span className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-cobalt-700">
                     <span
                       aria-hidden="true"
-                      className="cc-speaking-dot h-1.5 w-1.5 rounded-full bg-[#0f8f96]"
+                      className="cc-speaking-dot h-1.5 w-1.5 rounded-full bg-cobalt-500"
                     />
                     Speaking now
                   </span>
@@ -664,7 +664,7 @@ function AgentRuntimeControls({
               type="button"
               data-cursor="button"
               onClick={start}
-              className="cc-pressable rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+              className="cc-pressable rounded-lg bg-cobalt-700 px-4 py-2 text-sm font-medium text-white hover:bg-cobalt-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
             >
               Start conversation
             </button>
@@ -686,7 +686,7 @@ function AgentRuntimeControls({
                 type="button"
                 data-cursor="button"
                 onClick={() => setMuted(!isMuted)}
-                className="cc-pressable rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="cc-pressable rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500"
                 aria-pressed={isMuted}
               >
                 {isMuted ? "Unmute" : "Mute"}

@@ -1,121 +1,130 @@
-import { FileSearch, Languages, ShieldCheck } from "lucide-react";
+import { ClipboardList, MessageCircle, ShieldCheck } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandIntro } from "@/components/layout/BrandIntro";
 import { PageShell } from "@/components/layout/PageShell";
 import { UploadCard } from "@/components/intake/UploadCard";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
+import { AmbientVideo } from "@/components/media/AmbientVideo";
+import { BillPreviewArt } from "@/components/marketing/BillPreviewArt";
 
-const HERO_POINTS = [
-  { icon: FileSearch, label: "Plain-language findings" },
-  { icon: Languages, label: "English · Español · 中文 · Tagalog" },
-  { icon: ShieldCheck, label: "No account needed" },
+const TRUST = [
+  { icon: ClipboardList, label: "Line-item bill review" },
+  { icon: MessageCircle, label: "Ask about any charge" },
+  { icon: ShieldCheck, label: "No account required" },
 ];
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-x-hidden bg-paper">
       <BrandIntro />
+      {/* Medical statement hero — brand first, clinical context clear */}
+      <section className="relative isolate flex min-h-[100svh] flex-col">
+        <AmbientVideo
+          overlayClassName="bg-[linear-gradient(105deg,rgba(5,8,13,0.78)_0%,rgba(5,8,13,0.62)_42%,rgba(5,8,13,0.88)_100%)]"
+        />
+        <div className="relative z-10">
+          <AppHeader activeStep="analyze" tone="night" />
+        </div>
 
-      <div aria-hidden className="cc-hero-aurora pointer-events-none absolute inset-x-0 top-0 h-[620px]" />
-      <div aria-hidden className="cc-hero-grid pointer-events-none absolute inset-0" />
-
-      <div className="relative">
-        <AppHeader activeStep="analyze" />
-
-        <PageShell width="wide" className="pb-14 pt-9 lg:pt-14">
-          <div className="grid min-w-0 items-start gap-9 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,1.04fr)] lg:gap-12 xl:gap-16">
-            <section className="min-w-0 lg:pt-3">
-              <div className="cc-rise inline-flex items-center gap-2 rounded-full border border-[#0b3b3f]/10 bg-white/60 py-1.5 pl-2 pr-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0b4e55] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur">
-                <span className="cc-live-dot h-1.5 w-1.5 rounded-full bg-[#0f8f96]" aria-hidden />
-                Medical bills, made human
-              </div>
-
-              <h1 className="cc-rise cc-delay-1 mt-5 max-w-[13ch] font-display text-[2.7rem] font-semibold leading-[1.02] tracking-[-0.045em] text-navy-950 sm:text-[3.65rem] lg:text-[4.1rem]">
-                Your hospital bill,{" "}
-                <span className="cc-text-gradient">made easier to understand.</span>
-              </h1>
-
-              <p className="cc-rise cc-delay-2 mt-5 max-w-xl text-base leading-relaxed text-ink-600 sm:text-lg">
-                Upload your bill. We&apos;ll help you identify charges worth
-                questioning, understand your options, and leave with a clear next
-                step — in plain language.
-              </p>
-
-              <div className="cc-rise cc-delay-3 mt-7 flex flex-wrap gap-2">
-                {HERO_POINTS.map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#0b3b3f]/8 bg-white/55 px-3 py-1.5 text-xs font-medium text-ink-600 backdrop-blur transition-colors duration-300 hover:border-[#0f8f96]/25 hover:bg-white/85 hover:text-navy-950"
-                  >
-                    <Icon className="h-3.5 w-3.5 text-[#0f8f96]" aria-hidden />
-                    {label}
-                  </span>
-                ))}
-              </div>
-
-              <div className="cc-rise cc-delay-4 mt-9 hidden max-w-xl lg:block">
-                <HowItWorks />
-              </div>
-            </section>
-
-            <section className="cc-rise cc-delay-2 relative min-w-0">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-6 z-0 rounded-[2.8rem] bg-[radial-gradient(circle_at_60%_15%,rgba(15,143,150,0.16),transparent_58%),radial-gradient(circle_at_8%_90%,rgba(228,87,46,0.1),transparent_52%)] blur-2xl"
-              />
-
-              <div className="relative z-10 mb-3 flex items-center justify-between px-1">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.17em] text-ink-500">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#e4572e]" aria-hidden />
-                  Start your review
-                </span>
-                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-ink-400">
-                  PDF · Photo · Text
-                </span>
-              </div>
-
-              <div className="relative z-10">
-                <UploadCard />
-              </div>
-
-              <div
-                aria-hidden
-                className="cc-float absolute -left-5 top-[42%] hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/85 px-3.5 py-2.5 text-xs font-semibold text-navy-900 shadow-lift backdrop-blur xl:flex"
+        <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-1 flex-col justify-end gap-10 px-5 pb-12 pt-10 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-10 lg:pb-16">
+          <div className="max-w-2xl">
+            <p className="cc-rise inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/80 backdrop-blur">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-400" aria-hidden />
+              Hospital bill assistant
+            </p>
+            <p className="cc-rise cc-delay-1 mt-5 font-display text-[clamp(3rem,9vw,5.75rem)] font-semibold leading-[0.92] tracking-[-0.04em] text-white">
+              CareCounter
+            </p>
+            <h1 className="cc-rise cc-delay-2 mt-5 max-w-[18ch] font-display text-[clamp(1.55rem,2.8vw,2.35rem)] font-medium leading-[1.15] tracking-[-0.02em] text-white/92">
+              Understand every charge on your hospital statement.
+            </h1>
+            <p className="cc-rise cc-delay-3 mt-4 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+              Upload a medical bill. We flag line items worth questioning, compare
+              public hospital prices where available, and walk you through the
+              statement in plain language — before you call billing.
+            </p>
+            <div className="cc-rise cc-delay-4 mt-8">
+              <a
+                href="#start-review"
+                className="cc-pressable inline-flex items-center justify-center rounded-2xl bg-brand-500 px-9 py-4 text-base font-semibold text-white shadow-signal hover:bg-brand-400 sm:px-11 sm:py-5 sm:text-lg"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#0f8f96]/10 text-[#0d737a]">
-                  <FileSearch className="h-3.5 w-3.5" />
-                </span>
-                Charge-by-charge review
-              </div>
-
-              <div
-                aria-hidden
-                className="cc-float-slow absolute -right-3 bottom-[22%] hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/85 px-3.5 py-2.5 text-xs font-semibold text-navy-900 shadow-lift backdrop-blur xl:flex"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#e4572e]/10 text-[#c53d1c]">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </span>
-                Questions, not promises
-              </div>
-            </section>
+                Review my hospital bill
+              </a>
+            </div>
+            <ul className="cc-rise cc-delay-4 mt-7 flex flex-wrap gap-2">
+              {TRUST.map(({ icon: Icon, label }) => (
+                <li
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur"
+                >
+                  <Icon className="h-3.5 w-3.5 text-cobalt-300" aria-hidden />
+                  {label}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="cc-rise cc-delay-4 mt-10 lg:hidden">
+          <div className="cc-rise cc-delay-3 hidden w-full max-w-sm lg:block">
+            <div className="rounded-[1.4rem] border border-white/15 bg-night/45 p-3 shadow-lift backdrop-blur-md">
+              <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                Example statement preview
+              </p>
+              <BillPreviewArt />
+              <p className="mt-2 px-2 text-[11px] leading-relaxed text-white/50">
+                Synthetic demo charges — never your personal medical record.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="start-review"
+        className="relative scroll-mt-20 border-t border-ink-200/80 bg-[linear-gradient(180deg,#f7f9fc_0%,#eef2f7_100%)]"
+      >
+        <PageShell
+          width="wide"
+          className="grid gap-10 py-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] lg:items-start lg:gap-14"
+        >
+          <div className="cc-rise">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cobalt-600">
+              Patient bill intake
+            </p>
+            <h2 className="mt-3 max-w-[16ch] font-display text-3xl font-semibold tracking-tight text-navy-950 sm:text-4xl">
+              Send the statement. Keep the medical questions.
+            </h2>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-ink-600">
+              Choose a language, attach your hospital bill, and we prepare a
+              charge-by-charge review you can discuss with the billing guide on
+              the next screen.
+            </p>
+            <div className="mt-8 hidden lg:block">
+              <HowItWorks />
+            </div>
+          </div>
+
+          <div className="cc-rise cc-delay-2 relative min-w-0">
+            <UploadCard />
+          </div>
+
+          <div className="cc-rise cc-delay-3 lg:hidden">
             <HowItWorks />
           </div>
+        </PageShell>
 
-          <div className="mt-12 flex flex-col gap-3 border-t border-[#0b3b3f]/10 pt-5 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
+        <PageShell width="wide" className="border-t border-ink-200/60 pb-12 pt-6">
+          <div className="flex flex-col gap-3 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-xl leading-relaxed">
-              Possible issues to ask about — never confirmed overcharges or
-              guaranteed savings.
+              We surface possible billing questions — never confirmed overcharges
+              or guaranteed savings. This is not medical or legal advice.
             </p>
-            <p className="inline-flex items-center gap-2 font-medium text-[#0b4e55]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0f8f96]" aria-hidden />
-              Private by default · No account required
+            <p className="inline-flex items-center gap-2 font-medium text-cobalt-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-cobalt-500" aria-hidden />
+              Private by default · No patient account required
             </p>
           </div>
         </PageShell>
-      </div>
+      </section>
     </div>
   );
 }

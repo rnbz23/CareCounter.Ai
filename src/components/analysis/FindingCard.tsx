@@ -50,10 +50,10 @@ export function FindingCard({
       className="p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0d737a] text-sm font-semibold text-white">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cobalt-700 text-sm font-semibold text-white">
           {index + 1}
         </span>
-        <span className="rounded-md bg-[#0f8f96]/12 px-2 py-0.5 text-[11px] font-semibold text-[#0d737a]">
+        <span className="rounded-md bg-cobalt-500/12 px-2 py-0.5 text-[11px] font-semibold text-cobalt-700">
           {severityLabel(finding.severity)}
         </span>
         {isIllustrative ? (
@@ -83,8 +83,8 @@ export function FindingCard({
         <p className="mt-1.5 text-sm leading-relaxed text-ink-700">{why}</p>
       </div>
 
-      <div className="mt-4 rounded-xl border border-[#0f8f96]/25 bg-[#0f8f96]/06 px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0d737a]">
+      <div className="mt-4 rounded-xl border border-cobalt-500/25 bg-cobalt-500/06 px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cobalt-700">
           What you can ask
         </p>
         <p className="mt-1.5 text-sm leading-relaxed text-navy-950">{ask}</p>
@@ -117,7 +117,7 @@ export function FindingCard({
 
       {isActive ? (
         <div className="cc-evidence-open mt-5 border-t border-paper-rule pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0d737a]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cobalt-700">
             Supporting information
           </p>
           {relatedEvidence.length > 0 ? (

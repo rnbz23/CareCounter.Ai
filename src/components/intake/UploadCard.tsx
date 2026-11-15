@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, FileText, ImageIcon, Upload } from "lucide-react";
+import { AlertCircle, FileText, ImageIcon, Lock, Upload } from "lucide-react";
 import { submitBillForAnalysis } from "@/lib/api/analysis";
 import { AUTO_HOSPITAL_ID, KNOWN_HOSPITALS } from "@/lib/data/hospitals";
+import { useOptionalDnaRoute } from "@/components/boot/DnaRouteLoader";
 import { LanguageSelector, type LanguageCode } from "./LanguageSelector";
 import { DocumentStage } from "./DocumentStage";
 import { Pressable } from "@/components/motion/Pressable";
@@ -30,6 +31,7 @@ const STAGE_COPY: Record<Exclude<Stage, "idle">, string> = {
 
 export function UploadCard() {
   const router = useRouter();
+  const dnaRoute = useOptionalDnaRoute();
   const inputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<Mode>("pdf");
   const [file, setFile] = useState<File | null>(null);
@@ -113,15 +115,22 @@ export function UploadCard() {
       setStage("matching");
       await tick(320);
       setStage("preparing");
+      // Bring up DNA before the analyze call resolves so the transition is visible.
+      dnaRoute?.showDna("Opening your review");
 
       const analysis = await analysisPromise;
       setSucceeded(true);
 
       window.sessionStorage.setItem("cc_language", language);
       window.sessionStorage.setItem("cc_enter_from", "upload");
-      // Navigate immediately after success — do not delay for animation.
-      router.push(`/analysis/${analysis.id}`);
+      const href = `/analysis/${analysis.id}`;
+      if (dnaRoute) {
+        dnaRoute.navigateWithDna(href, "Opening your review");
+      } else {
+        router.push(href);
+      }
     } catch (err) {
+      dnaRoute?.hideDna();
       setStage("idle");
       setSucceeded(false);
       setError(
@@ -138,14 +147,19 @@ export function UploadCard() {
       className="cc-upload-card relative w-full rounded-[1.6rem] p-5 transition duration-[220ms] hover:-translate-y-0.5 hover:shadow-lift sm:p-7"
     >
       <div className="relative mb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0d737a]">
-          Start here
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cobalt-700">
+          Patient bill intake
         </p>
         <h2 className="mt-1 font-display text-2xl font-semibold text-navy-950">
-          Upload your hospital bill
+          Upload your hospital statement
         </h2>
-        <p className="mt-1 text-sm text-ink-500">
-          PDF, photo, or paste the printed charges · max 5 MB
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-500">
+          Attach the itemized medical bill (PDF or photo) or paste the printed
+          charges. Max 5 MB · one file.
+        </p>
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-cobalt-50 px-2.5 py-1 text-[11px] font-medium text-cobalt-800 ring-1 ring-cobalt-500/15">
+          <Lock className="h-3 w-3" aria-hidden />
+          Used for this review only · no patient account required
         </p>
       </div>
 
@@ -212,7 +226,7 @@ export function UploadCard() {
             onChange={(e) => setText(e.target.value)}
             rows={8}
             placeholder="Paste hospital name, date, and charges…"
-            className="w-full resize-y rounded-2xl border border-ink-200 bg-paper-muted/80 px-4 py-3 text-sm leading-relaxed outline-none transition duration-180 focus:border-[#0f8f96] focus:bg-white focus:ring-2 focus:ring-[#0f8f96]/15"
+            className="w-full resize-y rounded-2xl border border-ink-200 bg-paper-muted/80 px-4 py-3 text-sm leading-relaxed outline-none transition duration-180 focus:border-cobalt-500 focus:bg-white focus:ring-2 focus:ring-cobalt-500/15"
           />
         </div>
       ) : (
@@ -271,7 +285,7 @@ export function UploadCard() {
       {busy ? (
         <div
           aria-live="polite"
-          className="cc-tip-enter mt-4 rounded-2xl border border-[#0f8f96]/25 bg-[#0f8f96]/08 px-4 py-3.5 text-sm text-navy-950"
+          className="cc-tip-enter mt-4 rounded-2xl border border-cobalt-500/25 bg-cobalt-500/08 px-4 py-3.5 text-sm text-navy-950"
         >
           <div className="flex items-center justify-between gap-3">
             <p className="font-medium">
@@ -279,7 +293,7 @@ export function UploadCard() {
             </p>
             {succeeded ? (
               <svg
-                className="cc-check-draw h-5 w-5 text-[#0d737a]"
+                className="cc-check-draw h-5 w-5 text-cobalt-700"
                 viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden
@@ -296,7 +310,7 @@ export function UploadCard() {
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
             <div
-              className="h-full rounded-full bg-[#0f8f96] transition-all duration-[220ms] ease-out"
+              className="h-full rounded-full bg-cobalt-500 transition-all duration-[220ms] ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -313,7 +327,7 @@ export function UploadCard() {
             : "bg-ink-300",
         )}
       >
-        {canSubmit ? "Analyze my bill" : "Add a bill to continue"}
+        {canSubmit ? "Analyze my hospital bill" : "Add a statement to continue"}
       </Pressable>
     </div>
   );

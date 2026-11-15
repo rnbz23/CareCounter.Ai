@@ -150,7 +150,7 @@ export function LanguageSelector({
         value={value}
         onChange={(event) => onChange(event.target.value as LanguageCode)}
         className={cn(
-          "cc-select w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-navy-950 outline-none hover:border-[#0f8f96]/45",
+          "cc-select w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-navy-950 outline-none hover:border-cobalt-500/45",
           compact && "py-2",
         )}
         aria-label="Conversation language"

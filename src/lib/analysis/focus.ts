@@ -29,6 +29,43 @@ export function isValidFocusTarget(
   }
 }
 
+const SPOTLIGHT_MS = 3200;
+
+/**
+ * Smooth-scroll a target into the nearest scrollport (the bill column beside
+ * the fixed chat) and restart a spotlight pulse so re-focus always animates.
+ */
+function scrollAndSpotlight(targetId: string) {
+  if (typeof document === "undefined") return;
+
+  const el = document.getElementById(targetDomId(targetId));
+  if (!el) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({
+    behavior: reduceMotion ? "auto" : "smooth",
+    block: "center",
+    inline: "nearest",
+  });
+
+  try {
+    el.focus({ preventScroll: true });
+  } catch {
+    // non-focusable targets are fine
+  }
+
+  el.classList.remove("cc-spotlight-active");
+  // Force reflow so re-adding the class restarts the CSS animation.
+  void el.offsetWidth;
+  el.classList.add("cc-spotlight-active");
+  el.setAttribute("data-spotlight", "true");
+
+  window.setTimeout(() => {
+    el.classList.remove("cc-spotlight-active");
+    el.removeAttribute("data-spotlight");
+  }, SPOTLIGHT_MS);
+}
+
 /**
  * Validate a FocusTarget against the current Analysis.
  * Returns "focused" | "cleared" | "unknown_target" for Sumedh's AgentRuntime.
@@ -50,9 +87,11 @@ export function applyFocusTarget(
 
   setActiveFocus(focus);
 
-  if (options?.scroll !== false && typeof document !== "undefined") {
-    const el = document.getElementById(targetDomId(focus.targetId));
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+  if (options?.scroll !== false) {
+    // Defer one frame so mobile tab switches can mount the target first.
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollAndSpotlight(focus.targetId));
+    });
   }
 
   return "focused";

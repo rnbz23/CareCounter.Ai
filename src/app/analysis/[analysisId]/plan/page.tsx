@@ -14,6 +14,7 @@ import {
   patientPaymentHeadline,
   severityLabel,
 } from "@/lib/copy/patient";
+import { DnaNavLink } from "@/components/boot/DnaNavLink";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PageShell } from "@/components/layout/PageShell";
 import { WorkflowPath } from "@/components/motion/WorkflowPath";
@@ -103,12 +104,13 @@ export default async function PlanPage({
                 Possible issues to ask about — not confirmed mistakes.
               </p>
             </div>
-            <Link
+            <DnaNavLink
               href={`/analysis/${analysis.id}`}
-              className="text-sm font-semibold text-[#0d737a] hover:underline"
+              dnaLabel="Opening your billing guide"
+              className="text-sm font-semibold text-cobalt-700 hover:underline"
             >
               Review on analysis screen
-            </Link>
+            </DnaNavLink>
           </div>
 
           <ul className="mt-5 space-y-4">
@@ -118,10 +120,10 @@ export default async function PlanPage({
                 className="rounded-2xl border border-paper-rule bg-paper-muted/60 p-4 sm:p-5"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0d737a] text-xs font-semibold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cobalt-700 text-xs font-semibold text-white">
                     {index + 1}
                   </span>
-                  <span className="text-[11px] font-semibold text-[#0d737a]">
+                  <span className="text-[11px] font-semibold text-cobalt-700">
                     {severityLabel(finding.severity)}
                   </span>
                 </div>
@@ -154,9 +156,9 @@ export default async function PlanPage({
             {analysis.assistanceOptions.map((option) => (
               <article
                 key={option.id}
-                className="rounded-2xl border border-paper-rule p-4 transition hover:border-[#0f8f96]/40"
+                className="rounded-2xl border border-paper-rule p-4 transition hover:border-cobalt-500/40"
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0d737a]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cobalt-700">
                   {assistanceStatusLabel(option.status)}
                 </p>
                 <h3 className="mt-2 font-semibold text-navy-950">{option.title}</h3>
@@ -176,7 +178,7 @@ export default async function PlanPage({
                         href={option.contactUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-medium text-[#0d737a] hover:underline"
+                        className="font-medium text-cobalt-700 hover:underline"
                       >
                         Official source
                       </a>
@@ -207,7 +209,7 @@ export default async function PlanPage({
                 key={step.id}
                 className="relative rounded-2xl border border-paper-rule bg-paper-muted/40 p-4 pl-5 sm:p-5"
               >
-                <div className="absolute bottom-5 left-0 top-5 w-1 rounded-r-full bg-[#0f8f96]" />
+                <div className="absolute bottom-5 left-0 top-5 w-1 rounded-r-full bg-cobalt-500" />
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
                     {index + 1}
@@ -235,7 +237,7 @@ export default async function PlanPage({
                         href={step.contactUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-medium text-[#0d737a] hover:underline"
+                        className="font-medium text-cobalt-700 hover:underline"
                       >
                         Open official link
                       </a>
@@ -258,12 +260,13 @@ export default async function PlanPage({
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link
+            <DnaNavLink
               href={`/analysis/${analysis.id}`}
-              className="inline-flex rounded-2xl bg-[#0f8f96] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0d737a]"
+              dnaLabel="Opening your billing guide"
+              className="inline-flex rounded-2xl bg-cobalt-500 px-5 py-3 text-sm font-semibold text-white hover:bg-cobalt-700"
             >
               Ask your Billing Guide
-            </Link>
+            </DnaNavLink>
             <Link
               href="/"
               className="inline-flex rounded-2xl border border-white/20 px-5 py-3 text-sm font-medium text-white hover:bg-white/10"

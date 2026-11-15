@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import type { Analysis, FocusTarget } from "@/types/contracts";
 import { applyFocusTarget } from "@/lib/analysis/focus";
 import { getAnalysisById } from "@/lib/api/analysis";
+import { DnaNavLink } from "@/components/boot/DnaNavLink";
 import {
   LanguageSelector,
   SUPPORTED_LANGUAGES,
@@ -13,7 +13,6 @@ import {
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PageShell } from "@/components/layout/PageShell";
 import { AnalysisSummary } from "./AnalysisSummary";
-import { BillDocument } from "./BillDocument";
 import { FindingCard } from "./FindingCard";
 import { LineItemsTable } from "./LineItemsTable";
 import { AssistanceCard } from "./AssistanceCard";
@@ -23,13 +22,16 @@ import { cn } from "@/lib/utils";
 
 type MobileTab = "findings" | "document" | "aid";
 
+/**
+ * Stable two-column review: left scrolls the statement findings,
+ * right keeps the billing guide fixed. No fullscreen layout swap on connect.
+ */
 export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Analysis }) {
   const [analysis, setAnalysis] = useState(initialAnalysis);
   const [activeFocus, setActiveFocus] = useState<FocusTarget | null>(null);
   const [language, setLanguage] = useState<LanguageCode>("en");
   const [mobileTab, setMobileTab] = useState<MobileTab>("findings");
   const [refreshError, setRefreshError] = useState<string | null>(null);
-  const [conversationOpen, setConversationOpen] = useState(false);
 
   useEffect(() => {
     setAnalysis(initialAnalysis);
@@ -70,16 +72,6 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
     applyFocusTarget(analysis, null, setActiveFocus);
   }, [analysis]);
 
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setConversationOpen(connected);
-  }, []);
-
-  useEffect(() => {
-    if (!conversationOpen) return;
-    document.documentElement.classList.add("cc-stage-lock");
-    return () => document.documentElement.classList.remove("cc-stage-lock");
-  }, [conversationOpen]);
-
   const refreshAnalysis = useCallback(async () => {
     try {
       const next = await getAnalysisById(analysis.id);
@@ -108,7 +100,12 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
   }, [analysis.findings]);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col bg-[linear-gradient(180deg,#f7f9fc_0%,#eef2f7_100%)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(860px_300px_at_10%_-8%,rgba(59,95,255,0.09),transparent_58%),radial-gradient(640px_240px_at_94%_0%,rgba(242,74,29,0.06),transparent_55%)]"
+      />
+
       <AppHeader
         activeStep="understand"
         analysisId={analysis.id}
@@ -117,17 +114,23 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
 
       <PageShell
         width="wide"
-        className="flex min-h-0 flex-1 flex-col gap-5 py-4 lg:h-[calc(100vh-4rem)] lg:overflow-hidden lg:py-5"
+        className="relative z-10 flex min-h-0 flex-1 flex-col gap-4 py-4 lg:h-[calc(100dvh-4rem)] lg:max-h-[calc(100dvh-4rem)] lg:overflow-hidden lg:py-5"
       >
         {refreshError ? (
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
+          <p
+            className="shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            role="status"
+          >
             Voice update could not refresh this case: {refreshError}. Text findings remain available.
           </p>
         ) : null}
 
-        <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <section className="min-h-0 min-w-0 lg:overflow-y-auto lg:pr-1 cc-scrollbar">
-            <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
+        <div className="grid min-h-0 min-w-0 flex-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] lg:gap-6">
+          <section
+            id="cc-bill-scrollport"
+            className="min-h-0 min-w-0 space-y-5 overflow-y-auto pb-28 lg:pb-6 cc-scrollbar"
+          >
+            <div className="flex items-center justify-between gap-3 lg:hidden">
               <LanguageSelector
                 value={language}
                 onChange={setLanguage}
@@ -145,7 +148,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
 
             <AnalysisSummary analysis={analysis} />
 
-            <div className="mt-4 flex gap-1 rounded-xl bg-white p-1 shadow-sm ring-1 ring-ink-200/70 lg:hidden">
+            <div className="flex gap-1 rounded-xl bg-white/90 p-1 shadow-sm ring-1 ring-ink-200/70 backdrop-blur lg:hidden">
               {(
                 [
                   ["findings", "Findings"],
@@ -171,17 +174,20 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
 
             <div
               className={cn(
-                "mt-6 space-y-4 pb-28 lg:pb-10",
+                "space-y-4",
                 mobileTab !== "findings" && "hidden lg:block",
               )}
             >
               <div className="flex items-end justify-between gap-3">
                 <div>
-                  <h2 className="font-display text-2xl font-semibold text-navy-950">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cobalt-600">
+                    On this statement
+                  </p>
+                  <h2 className="mt-1 font-display text-2xl font-semibold text-navy-950">
                     Charges worth checking
                   </h2>
                   <p className="mt-1 text-sm text-ink-500">
-                    These are possible issues to ask about — not confirmed errors.
+                    Possible billing questions — not confirmed medical or billing errors.
                   </p>
                 </div>
                 <button
@@ -193,7 +199,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
                 </button>
               </div>
 
-              <div className="cc-stagger space-y-4">
+              <div className="space-y-4">
                 {sortedFindings.map((finding, index) => (
                   <FindingCard
                     key={finding.id}
@@ -209,10 +215,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
             </div>
 
             <div
-              className={cn(
-                "mt-8 pb-28 lg:pb-10",
-                mobileTab !== "document" && "hidden lg:block",
-              )}
+              className={cn(mobileTab !== "document" && "hidden lg:block")}
             >
               <LineItemsTable
                 lineItems={analysis.lineItems}
@@ -224,16 +227,19 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
 
             <div
               className={cn(
-                "mt-8 space-y-4 pb-28 lg:pb-10",
+                "space-y-4",
                 mobileTab !== "aid" && "hidden lg:block",
               )}
             >
               <div>
-                <h2 className="font-display text-2xl font-semibold text-navy-950">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cobalt-600">
+                  After the review
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-semibold text-navy-950">
                   Ways you may be able to get help
                 </h2>
                 <p className="mt-1 text-sm text-ink-500">
-                  These are possible options. We never promise eligibility or savings.
+                  Financial assistance ideas from public hospital resources — never a promise of eligibility.
                 </p>
               </div>
               <div className="space-y-3.5">
@@ -253,14 +259,13 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
                 )}
               </div>
 
-              {/* The plan page owns the full action checklist; this screen keeps a
-                  single, non-duplicative path to fundraising help. */}
               <div className="lg:hidden">
                 <FundraiseCard analysis={analysis} variant="inline" />
               </div>
 
-              <Link
+              <DnaNavLink
                 href={`/analysis/${analysis.id}/plan`}
+                dnaLabel="Preparing your plan"
                 data-cursor="button"
                 onClick={() => {
                   window.sessionStorage.setItem("cc_enter_from", "analysis");
@@ -268,58 +273,23 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
                 className="cc-pressable inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-700"
               >
                 See my next steps
-              </Link>
+              </DnaNavLink>
             </div>
           </section>
 
-          <aside
-            className={cn(
-              "hidden min-h-0 min-w-0 lg:block",
-              conversationOpen &&
-                "cc-conversation-stage fixed inset-0 z-50 bg-[#071a1d]/75 p-3 backdrop-blur-md sm:p-5 lg:p-6",
-            )}
-          >
-            <div
-              className={cn(
-                "flex min-h-0 flex-col gap-3",
-                conversationOpen ? "h-full" : "h-[calc(100vh-6.5rem)]",
-              )}
-            >
-              <div
-                className={cn(
-                  "min-h-0 flex-1",
-                  conversationOpen &&
-                    "mx-auto grid w-full max-w-[1560px] gap-4 lg:grid-cols-[minmax(0,1fr)_470px] lg:gap-5 xl:grid-cols-[minmax(0,1fr)_560px]",
-                )}
-              >
-                <div
-                  className={cn(
-                    "min-h-0",
-                    conversationOpen ? "cc-bill-stage" : "hidden",
-                  )}
-                >
-                  {conversationOpen ? (
-                    <BillDocument analysis={analysis} activeFocus={activeFocus} />
-                  ) : null}
-                </div>
-                <div
-                  className={cn(
-                    "min-h-0",
-                    conversationOpen ? "cc-agent-stage" : "h-full",
-                  )}
-                >
-                  <VoicePanel
-                    analysis={analysis}
-                    language={language}
-                    onLanguageChange={setLanguage}
-                    onFocus={handleFocus}
-                    onClearFocus={clearFocus}
-                    onUpdated={refreshAnalysis}
-                    onConnectionChange={handleConnectionChange}
-                  />
-                </div>
-              </div>
-              {!conversationOpen ? <FundraiseCard analysis={analysis} /> : null}
+          <aside className="hidden min-h-0 min-w-0 lg:flex lg:flex-col lg:gap-3">
+            <div className="min-h-0 flex-1">
+              <VoicePanel
+                analysis={analysis}
+                language={language}
+                onLanguageChange={setLanguage}
+                onFocus={handleFocus}
+                onClearFocus={clearFocus}
+                onUpdated={refreshAnalysis}
+              />
+            </div>
+            <div className="shrink-0">
+              <FundraiseCard analysis={analysis} />
             </div>
           </aside>
         </div>

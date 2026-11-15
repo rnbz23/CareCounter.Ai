@@ -35,15 +35,15 @@ export function WorkflowPath({
                 aria-hidden
                 className={cn(
                   "mx-1 hidden h-px w-8 sm:block",
-                  done || current ? "bg-[#0f8f96]" : "bg-ink-200",
+                  done || current ? "bg-cobalt-500" : "bg-ink-200",
                 )}
               />
             ) : null}
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all duration-200",
-                current && "bg-[#0f8f96]/12 text-[#0d737a]",
-                done && !current && "text-[#0d737a]",
+                current && "bg-cobalt-500/12 text-cobalt-700",
+                done && !current && "text-cobalt-700",
                 !done && !current && "text-ink-400",
               )}
             >
@@ -51,7 +51,7 @@ export function WorkflowPath({
                 className={cn(
                   "flex h-5 w-5 items-center justify-center rounded-full text-[10px]",
                   current || done
-                    ? "bg-[#0d737a] text-white"
+                    ? "bg-cobalt-700 text-white"
                     : "bg-ink-100 text-ink-500",
                 )}
               >

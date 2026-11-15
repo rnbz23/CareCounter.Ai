@@ -282,11 +282,11 @@ function FundraiseDialog({
         <header className="relative overflow-hidden bg-[linear-gradient(135deg,#0e1a2b_0%,#1b2a41_58%,#243752_100%)] px-5 py-5 text-white sm:px-6">
           <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-brand-500/15 blur-2xl" aria-hidden />
           <div className="relative flex items-start gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 text-[#9edbd4] ring-1 ring-white/15">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 text-cobalt-200 ring-1 ring-white/15">
               <HeartHandshake className="h-5 w-5" aria-hidden />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7ec8cc]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cobalt-300">
                 Fundraising studio
               </p>
               <h2 id={titleId} className="mt-1 font-display text-2xl font-semibold">
@@ -353,7 +353,7 @@ function FundraiseDialog({
                     onChange={(event) =>
                       setDraft({ ...draft, subject: event.target.value })
                     }
-                    className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-950 outline-none focus:border-[#0f8f96]"
+                    className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-950 outline-none focus:border-cobalt-500"
                   />
                 </label>
               ) : (
@@ -366,7 +366,7 @@ function FundraiseDialog({
                     onChange={(event) =>
                       setDraft({ ...draft, title: event.target.value })
                     }
-                    className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-950 outline-none focus:border-[#0f8f96]"
+                    className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-950 outline-none focus:border-cobalt-500"
                   />
                 </label>
               )}
@@ -381,7 +381,7 @@ function FundraiseDialog({
                     setDraft({ ...draft, body: event.target.value })
                   }
                   rows={9}
-                  className="cc-scrollbar w-full resize-y rounded-xl border border-ink-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-ink-700 outline-none focus:border-[#0f8f96]"
+                  className="cc-scrollbar w-full resize-y rounded-xl border border-ink-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-ink-700 outline-none focus:border-cobalt-500"
                 />
               </label>
 
@@ -396,7 +396,7 @@ function FundraiseDialog({
                       setDraft({ ...draft, shareText: event.target.value })
                     }
                     rows={3}
-                    className="cc-scrollbar w-full resize-y rounded-xl border border-ink-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-ink-700 outline-none focus:border-[#0f8f96]"
+                    className="cc-scrollbar w-full resize-y rounded-xl border border-ink-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-ink-700 outline-none focus:border-cobalt-500"
                   />
                 </label>
               ) : null}
@@ -423,7 +423,7 @@ function FundraiseDialog({
                   <a
                     href={mailtoHref}
                     data-cursor="button"
-                    className="cc-pressable inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 hover:border-[#0f8f96]/40 hover:bg-paper-muted"
+                    className="cc-pressable inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 hover:border-cobalt-500/40 hover:bg-paper-muted"
                   >
                     <Send className="h-4 w-4" aria-hidden />
                     Open in email app
@@ -434,7 +434,7 @@ function FundraiseDialog({
                   data-cursor="button"
                   onClick={() => void generate()}
                   disabled={loading}
-                  className="cc-pressable inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 hover:border-[#0f8f96]/40 hover:bg-paper-muted disabled:opacity-60"
+                  className="cc-pressable inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 hover:border-cobalt-500/40 hover:bg-paper-muted disabled:opacity-60"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -487,7 +487,7 @@ function FundraiseDialog({
                       value={goal}
                       onChange={(event) => setGoal(event.target.value)}
                       inputMode="decimal"
-                      className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-7 pr-3.5 text-sm font-medium text-navy-950 outline-none focus:border-[#0f8f96]"
+                      className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-7 pr-3.5 text-sm font-medium text-navy-950 outline-none focus:border-cobalt-500"
                     />
                   </div>
                   <p className="mt-1.5 text-[11px] text-ink-500">
@@ -530,7 +530,7 @@ function FundraiseDialog({
                   maxLength={500}
                   rows={3}
                   placeholder="A sentence about why this help matters, in your own words."
-                  className="cc-scrollbar w-full resize-y rounded-xl border border-ink-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-ink-700 outline-none placeholder:text-ink-400 focus:border-[#0f8f96]"
+                  className="cc-scrollbar w-full resize-y rounded-xl border border-ink-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-ink-700 outline-none placeholder:text-ink-400 focus:border-cobalt-500"
                 />
                 <p className="mt-1 text-right text-[10px] text-ink-400">
                   {personalNote.length}/500
@@ -590,14 +590,14 @@ function FormatChoice({
       className={cn(
         "rounded-xl border p-3.5 text-left transition-colors",
         active
-          ? "border-[#0f8f96] bg-[#effbf9] shadow-[0_0_0_3px_rgba(15,143,150,0.08)]"
+          ? "border-cobalt-500 bg-cobalt-50 shadow-[0_0_0_3px_rgba(59,95,255,0.12)]"
           : "border-ink-200 bg-white hover:border-ink-300 hover:bg-paper-muted/50",
       )}
     >
       <span
         className={cn(
           "flex items-center gap-2 text-sm font-semibold",
-          active ? "text-[#0d737a]" : "text-navy-950",
+          active ? "text-cobalt-700" : "text-navy-950",
         )}
       >
         {icon}

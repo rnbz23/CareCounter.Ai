@@ -51,7 +51,7 @@ export function VoicePanel({
       <div className="mx-auto flex max-w-lg items-center gap-2">
         <Pressable
           onClick={() => setExpanded(true)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#0d737a] px-4 py-3.5 text-sm font-semibold text-white"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cobalt-600 px-4 py-3.5 text-sm font-semibold text-white"
         >
           <Radio className="h-4 w-4" aria-hidden />
           Start talking
@@ -73,21 +73,21 @@ export function VoicePanel({
       data-cursor="card"
       className={cn(
         "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.5rem] text-navy-950 shadow-lift",
-        "bg-[linear-gradient(165deg,#0e1a2b_0%,#1b2a41_55%,#243752_100%)]",
+        "bg-[linear-gradient(165deg,#05080d_0%,#121a26_48%,#1a2438_100%)]",
         compact ? "max-h-[70vh]" : "",
       )}
     >
       <div className="relative border-b border-white/10 px-5 py-3.5 sm:px-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7ec8cc]">
-              Your Billing Guide
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cobalt-300">
+              Hospital billing guide
             </p>
             <h2 className="mt-1 font-display text-lg font-semibold tracking-tight text-white">
-              Talk through this bill
+              Ask about a charge
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-white/65">
-              Start in any language. Switch anytime.
+              The guide highlights line items on your statement as you talk.
             </p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function VoicePanel({
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
             Language · {languageLabel}
           </p>
-          <div className="[&_select]:border-white/15 [&_select]:bg-white/10 [&_select]:text-white [&_select]:focus:border-[#7ec8cc]">
+          <div className="[&_select]:border-white/15 [&_select]:bg-white/10 [&_select]:text-white [&_select]:focus:border-cobalt-300">
             <LanguageSelector value={language} onChange={onLanguageChange} compact />
           </div>
         </div>

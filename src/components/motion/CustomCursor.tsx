@@ -135,23 +135,23 @@ export function CustomCursor() {
     >
       <div
         className={cn(
-          "relative flex items-center justify-center rounded-full border-[1.5px] border-[#0f8f96] bg-[#0f8f96]/12 transition-all duration-150 ease-out",
+          "relative flex items-center justify-center rounded-full border-[1.5px] border-cobalt-500 bg-cobalt-500/12 transition-all duration-150 ease-out",
           mode === "default" && "h-4 w-4",
-          mode === "button" && "h-9 w-9 bg-[#0f8f96]/18",
+          mode === "button" && "h-9 w-9 bg-cobalt-500/18",
           mode === "card" && "h-8 w-8",
           mode === "upload" && "h-10 w-10 border-dashed",
-          mode === "finding" && "h-9 w-9 border-[#0d737a] bg-[#0f8f96]/22",
+          mode === "finding" && "h-9 w-9 border-[#132fdb] bg-cobalt-500/22",
           pressed && "scale-75",
         )}
       >
-        <span className="h-1 w-1 rounded-full bg-[#0d737a]" />
+        <span className="h-1 w-1 rounded-full bg-cobalt-700" />
         {mode === "upload" ? (
-          <span className="absolute -bottom-5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-[#0d737a]">
+          <span className="absolute -bottom-5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-cobalt-700">
             Upload
           </span>
         ) : null}
         {mode === "finding" ? (
-          <span className="absolute -bottom-5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-[#0d737a]">
+          <span className="absolute -bottom-5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.14em] text-cobalt-700">
             Focus
           </span>
         ) : null}

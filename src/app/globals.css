@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --cc-bg: #edf4f1;
-  --cc-ink: #14211f;
-  --cc-accent: #e4572e;
-  --cc-navy: #0b2630;
-  --cc-teal: #0f8f96;
+  --cc-bg: #eef2f7;
+  --cc-ink: #141820;
+  --cc-accent: #f24a1d;
+  --cc-navy: #0b1220;
+  --cc-cobalt: #3b5fff;
+  --cc-signal: #f24a1d;
 }
 
 html {
@@ -17,6 +18,17 @@ html {
 html.cc-intro-lock,
 html.cc-intro-lock body {
   overflow: hidden;
+}
+
+/* Hide the real header brand until the intro mark lands on it. */
+html.cc-intro-active [data-brand-home] {
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+
+html:not(.cc-intro-active) [data-brand-home] {
+  transition: opacity 280ms ease;
 }
 
 html.cc-stage-lock,
@@ -50,14 +62,14 @@ body {
 body {
   color: var(--cc-ink);
   background:
-    radial-gradient(1100px 620px at 4% -8%, rgba(15, 143, 150, 0.16), transparent 60%),
-    radial-gradient(860px 520px at 100% -4%, rgba(228, 87, 46, 0.1), transparent 56%),
-    linear-gradient(180deg, #f8fbfa 0%, #eef5f2 48%, #e8f0ed 100%);
+    radial-gradient(980px 560px at 8% -10%, rgba(59, 95, 255, 0.14), transparent 58%),
+    radial-gradient(820px 480px at 100% 0%, rgba(242, 74, 29, 0.1), transparent 54%),
+    linear-gradient(180deg, #f7f9fc 0%, #eef2f7 52%, #e7edf5 100%);
   background-attachment: fixed;
 }
 
 ::selection {
-  background: rgba(15, 143, 150, 0.2);
+  background: rgba(59, 95, 255, 0.22);
 }
 
 @layer components {
@@ -95,7 +107,7 @@ body {
   }
 
   .cc-pressable:focus-visible {
-    outline: 2px solid #0f8f96;
+    outline: 2px solid #3b5fff;
     outline-offset: 2px;
   }
 
@@ -107,8 +119,154 @@ body {
   }
 
   .cc-select:focus {
-    border-color: #0f8f96;
-    box-shadow: 0 0 0 3px rgba(15, 143, 150, 0.15);
+    border-color: #3b5fff;
+    box-shadow: 0 0 0 3px rgba(59, 95, 255, 0.16);
+  }
+}
+
+.cc-site-loader-exit {
+  animation: cc-loader-fade 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cc-loader-fade {
+  to {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+
+.cc-loader-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  opacity: 0.55;
+}
+
+.cc-loader-orb-a {
+  top: 12%;
+  left: 8%;
+  width: 280px;
+  height: 280px;
+  background: rgba(59, 95, 255, 0.45);
+  animation: float-y 6s ease-in-out infinite;
+}
+
+.cc-loader-orb-b {
+  right: 4%;
+  bottom: 18%;
+  width: 340px;
+  height: 340px;
+  background: rgba(242, 74, 29, 0.35);
+  animation: float-y 7.5s ease-in-out infinite reverse;
+}
+
+.cc-loader-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 0.6px, transparent 0.6px);
+  background-size: 3px 3px;
+}
+
+.cc-loader-word-active {
+  animation: cc-loader-word 0.78s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cc-loader-word {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes focus-sheen {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes spotlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(15, 159, 110, 0.45);
+    transform: scale(1);
+  }
+  40% {
+    box-shadow: 0 0 0 14px rgba(15, 159, 110, 0);
+    transform: scale(1.015);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(15, 159, 110, 0);
+    transform: scale(1);
+  }
+}
+
+.cc-video-fallback {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(59, 95, 255, 0.45), transparent 42%),
+    radial-gradient(circle at 80% 30%, rgba(242, 74, 29, 0.35), transparent 40%),
+    linear-gradient(145deg, #05080d 0%, #121a26 55%, #1a2438 100%);
+}
+
+.cc-video-sheen {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.05) 42%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: focus-sheen 9s linear infinite;
+}
+
+.cc-spotlight-active {
+  animation: spotlight-pulse 0.95s ease-out 3;
+  border-color: rgba(15, 159, 110, 0.75) !important;
+  background:
+    linear-gradient(110deg, rgba(15, 159, 110, 0.14), rgba(15, 159, 110, 0.06), rgba(52, 211, 153, 0.12)),
+    #ffffff !important;
+  background-size: 220% 100%;
+  box-shadow:
+    0 0 0 1px rgba(15, 159, 110, 0.35),
+    0 18px 40px rgba(15, 159, 110, 0.16) !important;
+  transform: translateY(-2px);
+}
+
+.cc-spotlight-active::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(15, 159, 110, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-spotlight-active {
+    animation: none !important;
+    box-shadow: 0 0 0 3px #0f9f6e !important;
+  }
+
+  .cc-video-sheen,
+  .cc-loader-orb-a,
+  .cc-loader-orb-b {
+    animation: none !important;
   }
 }
 
@@ -413,6 +571,7 @@ html.cc-cursor-on option {
 }
 
 .cc-active-card {
+  /* Legacy class kept; spotlight pulse is applied via .cc-spotlight-active */
   animation: cc-highlight-breathe 2.2s ease-in-out infinite;
 }
 
@@ -466,7 +625,7 @@ html.cc-cursor-on option {
 }
 
 .cc-connector {
-  background: linear-gradient(180deg, #0f8f96 0%, transparent 100%);
+  background: linear-gradient(180deg, #3b5fff 0%, transparent 100%);
 }
 
 /* Conversation stage: bill and agent arrive together when a call connects. */
@@ -521,16 +680,16 @@ html.cc-cursor-on option {
 @keyframes cc-bill-line-pulse {
   0%,
   100% {
-    background-color: rgba(15, 143, 150, 0.1);
+    background-color: rgba(15, 159, 110, 0.1);
     box-shadow:
-      inset 3px 0 0 #0f8f96,
-      0 0 0 0 rgba(15, 143, 150, 0);
+      inset 3px 0 0 #0f9f6e,
+      0 0 0 0 rgba(15, 159, 110, 0);
   }
   50% {
-    background-color: rgba(15, 143, 150, 0.17);
+    background-color: rgba(15, 159, 110, 0.18);
     box-shadow:
-      inset 3px 0 0 #0f8f96,
-      0 0 0 4px rgba(15, 143, 150, 0.08);
+      inset 3px 0 0 #0f9f6e,
+      0 0 0 4px rgba(15, 159, 110, 0.1);
   }
 }
 
@@ -588,12 +747,12 @@ html.cc-cursor-on option {
 .cc-upload-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(165deg, #ffffff 0%, #f5faf7 100%);
-  border: 1px solid rgba(207, 224, 218, 0.95);
+  background: linear-gradient(165deg, #ffffff 0%, #f3f6fb 100%);
+  border: 1px solid rgba(207, 216, 230, 0.95);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 32px 72px rgba(11, 59, 63, 0.11),
-    0 4px 14px rgba(11, 59, 63, 0.04);
+    0 28px 64px rgba(17, 25, 84, 0.1),
+    0 4px 14px rgba(17, 25, 84, 0.04);
 }
 
 .cc-upload-card::before {
@@ -601,27 +760,27 @@ html.cc-cursor-on option {
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, #0f8f96 0%, #8dc9be 52%, #e4572e 100%);
-  opacity: 0.9;
+  background: linear-gradient(90deg, #3b5fff 0%, #94b5ff 48%, #f24a1d 100%);
+  opacity: 0.95;
 }
 
 .cc-primary {
-  background-image: linear-gradient(110deg, #0f8f96 0%, #0b737a 52%, #0a5d64 100%);
+  background-image: linear-gradient(110deg, #3b5fff 0%, #1a3df5 55%, #f24a1d 130%);
   background-size: 150% 150%;
   box-shadow:
-    0 14px 30px rgba(11, 102, 109, 0.28),
+    0 14px 30px rgba(59, 95, 255, 0.28),
     0 1px 0 rgba(255, 255, 255, 0.25) inset;
 }
 
 .cc-primary:hover {
   background-position: 100% 50%;
   box-shadow:
-    0 18px 36px rgba(11, 102, 109, 0.34),
+    0 18px 36px rgba(59, 95, 255, 0.34),
     0 1px 0 rgba(255, 255, 255, 0.25) inset;
 }
 
 .cc-text-gradient {
-  background: linear-gradient(105deg, #0d737a 0%, #0f8f96 46%, #d95833 118%);
+  background: linear-gradient(105deg, #132fdb 0%, #3b5fff 46%, #d95833 118%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -656,9 +815,11 @@ html.cc-cursor-on option {
   transform: translateZ(0);
 }
 
-/* Intro overlay */
+/* Intro overlay — never use animation-fill-mode:both with from{opacity:0};
+   that keeps the overlay invisible if animations are paused or delayed. */
 .cc-intro {
-  animation: cc-intro-in 0.4s ease both;
+  opacity: 1;
+  animation: cc-intro-in 0.4s ease-out;
 }
 
 .cc-intro-backdrop {
@@ -698,8 +859,9 @@ html.cc-cursor-on option {
 
 .cc-dna-strand {
   stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: cc-dna-draw 1.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  /* Visible by default so the helix still shows if animations are paused. */
+  stroke-dashoffset: 0;
+  animation: cc-dna-draw 1.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cc-dna-strand-delayed {
@@ -724,7 +886,8 @@ html.cc-cursor-on option {
 }
 
 .cc-mark-arrive {
-  animation: cc-mark-in 0.76s cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 1;
+  animation: cc-mark-in 0.76s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cc-intro-word {
@@ -773,6 +936,9 @@ html.cc-cursor-on option {
 }
 
 @keyframes cc-dna-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
   to {
     stroke-dashoffset: 0;
   }

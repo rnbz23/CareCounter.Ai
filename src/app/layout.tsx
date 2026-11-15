@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Source_Sans_3, Syne } from "next/font/google";
+import { Fraunces, Outfit } from "next/font/google";
 import "./globals.css";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { CustomCursor } from "@/components/motion/CustomCursor";
+import { DnaRouteLoader } from "@/components/boot/DnaRouteLoader";
 
-const sans = Source_Sans_3({
+const sans = Outfit({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const display = Syne({
+const display = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
@@ -29,9 +29,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sans.variable} ${display.variable} font-sans antialiased text-ink-950`}>
-        <CustomCursor />
-        <PageTransition>{children}</PageTransition>
+      <body
+        className={`${sans.variable} ${display.variable} font-sans antialiased text-ink-950`}
+      >
+        <DnaRouteLoader>
+          <PageTransition>{children}</PageTransition>
+        </DnaRouteLoader>
       </body>
     </html>
   );

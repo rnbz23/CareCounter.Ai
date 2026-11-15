@@ -54,16 +54,16 @@ export function LineItemsTable({
                   className={cn(
                     "cursor-pointer border-t border-paper-rule transition-[background-color,box-shadow] duration-[180ms] ease-out",
                     focused
-                      ? "bg-[#0f8f96]/12 shadow-[inset_3px_0_0_#0f8f96]"
+                      ? "bg-emerald-500/15 shadow-[inset_3px_0_0_#0f9f6e]"
                       : related
-                        ? "bg-[#0f8f96]/06 shadow-[inset_3px_0_0_rgba(15,143,150,0.35)]"
-                        : "hover:bg-[#0f8f96]/[0.055] hover:shadow-[inset_3px_0_0_rgba(15,143,150,0.35)]",
+                        ? "bg-emerald-500/08 shadow-[inset_3px_0_0_rgba(15,159,110,0.35)]"
+                        : "hover:bg-emerald-500/[0.06] hover:shadow-[inset_3px_0_0_rgba(15,159,110,0.35)]",
                   )}
                 >
                   <td className="px-4 py-3.5 font-medium text-navy-950">
                     {item.description}
                     {related && !focused ? (
-                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-[#0d737a]">
+                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
                         Related finding
                       </span>
                     ) : null}

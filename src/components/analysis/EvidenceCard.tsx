@@ -31,7 +31,7 @@ export function EvidenceCard({ evidence }: { evidence: Evidence }) {
           href={evidence.sourceUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#0d737a] hover:underline"
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-cobalt-700 hover:underline"
         >
           View source
           <ExternalLink className="h-3.5 w-3.5" aria-hidden />
