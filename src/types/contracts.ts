@@ -124,6 +124,36 @@ export const AnalysisSchema = z.object({
 });
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
+export const AgentContextLineItemSchema = LineItemSchema.pick({
+  id: true,
+  code: true,
+  description: true,
+  serviceDate: true,
+  quantity: true,
+  billedCents: true,
+});
+
+export const AgentContextSchema = z.object({
+  analysisId: Id,
+  hospitalId: z.string().nullable(),
+  hospitalName: z.string(),
+  serviceDate: ISODate,
+  currency: z.literal("USD"),
+  totalBilledCents: MoneyCents,
+  lineItems: z.array(AgentContextLineItemSchema),
+  findings: z.array(FindingSchema),
+  evidence: z.array(EvidenceSchema),
+  insurance: InsuranceProfileSchema,
+  assistanceOptions: z.array(AssistanceOptionSchema),
+  actionPlan: ActionPlanSchema.nullable(),
+  grounding: z.object({
+    publicPriceEvidenceAvailable: z.boolean(),
+    eobPatientResponsibilitySource: z.enum(["user_provided", "not_provided"]),
+    confirmedMinimumAvailable: z.boolean(),
+  }),
+});
+export type AgentContext = z.infer<typeof AgentContextSchema>;
+
 export const BillExtractionSchema = z.object({
   hospitalName: z.string(),
   serviceDate: ISODate,
