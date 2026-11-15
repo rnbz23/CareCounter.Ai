@@ -24,6 +24,11 @@ import {
 import { buildAgentContext } from "@/lib/analysis/agent-context";
 import { isValidFocusTarget } from "@/lib/analysis/focus";
 import { formatCents } from "@/lib/format";
+import {
+  buildVoiceCaseBrief,
+  serializeVoiceCaseContext,
+  usdPlainFromCents,
+} from "@/lib/voice/money";
 import { patientFindingTitle } from "@/lib/copy/patient";
 import {
   SUPPORTED_LANGUAGES,
@@ -272,7 +277,7 @@ function AgentRuntimeControls({
   useConversationClientTool("get_case_context", () => {
     try {
       const context = buildAgentContext(analysisRef.current);
-      return JSON.stringify(context);
+      return serializeVoiceCaseContext(context);
     } catch {
       return JSON.stringify({
         error: "case_context_unavailable",
@@ -440,15 +445,8 @@ function AgentRuntimeControls({
       stream.getTracks().forEach((track) => track.stop());
 
       const current = analysisRef.current;
-      const findingsBrief = current.findings
-        .slice(0, 3)
-        .map((finding, index) => `${index + 1}. ${finding.id}: ${finding.title}`)
-        .join(" | ");
-      const caseBrief =
-        `${current.hospitalName}; service ${current.serviceDate ?? "unknown"}; ` +
-        `total ${formatCents(current.totalBilledCents)}; ` +
-        `${current.lineItems.length} line items; ${current.findings.length} findings` +
-        (findingsBrief ? ` (${findingsBrief})` : "");
+      const totalUsd = usdPlainFromCents(current.totalBilledCents);
+      const caseBrief = buildVoiceCaseBrief(current);
 
       // Do NOT send overrides.agent.language here. ElevenLabs locks that
       // override for the whole call, so the language_detection tool fails with
@@ -466,7 +464,8 @@ function AgentRuntimeControls({
         hospital_name: current.hospitalName,
         hospital_id: current.hospitalId ?? "",
         service_date: current.serviceDate ?? "",
-        total_billed: formatCents(current.totalBilledCents),
+        // Plain USD only. Never send `$17,580.00`; the voice model drops digits.
+        total_billed: `${totalUsd} USD`,
         finding_count: String(current.findings.length),
         case_brief: caseBrief,
         conversation_language: languageLabelForCode(language),
