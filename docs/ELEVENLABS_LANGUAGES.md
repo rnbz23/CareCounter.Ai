@@ -79,6 +79,23 @@ Set the public agent id at build time:
 NEXT_PUBLIC_ELEVENLABS_AGENT_ID=agent_...
 ```
 
+## Case context (local demo)
+
+Bright Data is **offline ingestion only**. Bill details and Sharp price findings
+are already stored in Neon and loaded into the browser Analysis object.
+
+ElevenLabs **server/webhook tools cannot reach `localhost`**. For local demos,
+configure these as **client tools** in the ElevenLabs dashboard (same names):
+
+- `get_case_context` — returns the compact AgentContext JSON from the loaded case
+- `focus_target` / `clear_focus` / `refresh_case`
+- `save_insurance_profile` / `get_assistance_options` / `generate_action_plan`
+
+Also pass dynamic variables: `analysis_id`, `hospital_name`, `case_brief`, etc.
+
+Protected server route `POST /api/agent/tools` remains for cloud demos behind a
+public URL (ngrok/tunnel) with header `X-Agent-Tool-Secret`.
+
 Never commit `.env.local` or put an agent tool secret/API key in a
 `NEXT_PUBLIC_` variable. `.env.example` contains placeholders only.
 

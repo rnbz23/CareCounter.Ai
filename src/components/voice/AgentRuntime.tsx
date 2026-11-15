@@ -15,8 +15,15 @@ import {
   useConversationMode,
   useConversationStatus,
 } from "@elevenlabs/react";
-import { FocusTargetSchema, type Analysis, type FocusTarget } from "@/types/contracts";
+import {
+  FocusTargetSchema,
+  InsuranceProfileSchema,
+  type Analysis,
+  type FocusTarget,
+} from "@/types/contracts";
+import { buildAgentContext } from "@/lib/analysis/agent-context";
 import { isValidFocusTarget } from "@/lib/analysis/focus";
+import { formatCents } from "@/lib/format";
 import { SUPPORTED_LANGUAGES, firstMessageForLanguage } from "@/components/intake/LanguageSelector";
 
 /** Matches the master-spec interface exactly (four props). */
@@ -144,32 +151,159 @@ function AgentRuntimeControls({
   const [input, setInput] = useState("");
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Keep tool handlers on the latest analysis without requiring a session restart.
+  const analysisRef = useRef(analysis);
+  const onFocusRef = useRef(onFocus);
+  const onUpdatedRef = useRef(onUpdated);
+  const onClearFocusRef = useRef(onClearFocus);
+  useEffect(() => {
+    analysisRef.current = analysis;
+  }, [analysis]);
+  useEffect(() => {
+    onFocusRef.current = onFocus;
+  }, [onFocus]);
+  useEffect(() => {
+    onUpdatedRef.current = onUpdated;
+  }, [onUpdated]);
+  useEffect(() => {
+    onClearFocusRef.current = onClearFocus;
+  }, [onClearFocus]);
+
+  /**
+   * Client tools run in the browser. Prefer these over ElevenLabs server/webhook
+   * tools for local demos — cloud webhooks cannot reach localhost.
+   * Bright Data is offline-only; case context comes from the loaded Analysis / Neon.
+   */
+  useConversationClientTool("get_case_context", () => {
+    try {
+      const context = buildAgentContext(analysisRef.current);
+      return JSON.stringify(context);
+    } catch {
+      return JSON.stringify({
+        error: "case_context_unavailable",
+        message: "The current bill context could not be built in the browser.",
+      });
+    }
+  });
+
   useConversationClientTool("focus_target", (params: Record<string, unknown>) => {
     // Reject malformed payloads AND IDs that are not in the current analysis
     // (stale IDs from a previous case are never focusable).
+    const current = analysisRef.current;
     const parsed = FocusTargetSchema.safeParse(params);
-    if (!parsed.success || !isValidFocusTarget(analysis, parsed.data)) {
+    if (!parsed.success || !isValidFocusTarget(current, parsed.data)) {
       return "unknown_target";
     }
     try {
-      return onFocus(parsed.data);
+      return onFocusRef.current(parsed.data);
     } catch {
       return "unknown_target";
     }
   });
 
   useConversationClientTool("clear_focus", () => {
-    if (!onClearFocus) return "unsupported";
-    onClearFocus();
+    if (!onClearFocusRef.current) return "unsupported";
+    onClearFocusRef.current();
     return "cleared";
   });
 
   useConversationClientTool("refresh_case", async () => {
     try {
-      await onUpdated();
+      await onUpdatedRef.current();
       return "updated";
     } catch {
       return "refresh_failed";
+    }
+  });
+
+  useConversationClientTool("save_insurance_profile", async (params: Record<string, unknown>) => {
+    const current = analysisRef.current;
+    const parsed = InsuranceProfileSchema.safeParse(
+      "insurance" in params ? params.insurance : params,
+    );
+    if (!parsed.success) {
+      return JSON.stringify({
+        error: "invalid_insurance_profile",
+        message: "Send a valid insurance profile.",
+      });
+    }
+    try {
+      const res = await fetch(
+        `/api/analyses/${encodeURIComponent(current.id)}/insurance`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed.data),
+        },
+      );
+      if (!res.ok) {
+        return JSON.stringify({
+          error: "save_failed",
+          message: "Insurance profile could not be saved.",
+        });
+      }
+      await onUpdatedRef.current();
+      return JSON.stringify({ ok: true, analysisId: current.id });
+    } catch {
+      return JSON.stringify({
+        error: "save_failed",
+        message: "Insurance profile could not be saved.",
+      });
+    }
+  });
+
+  useConversationClientTool("get_assistance_options", async () => {
+    const current = analysisRef.current;
+    try {
+      const res = await fetch(
+        `/api/analyses/${encodeURIComponent(current.id)}/assistance`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        return JSON.stringify({
+          error: "assistance_failed",
+          message: "Assistance options could not be loaded from stored public resources.",
+        });
+      }
+      const updated = (await res.json()) as Analysis;
+      await onUpdatedRef.current();
+      return JSON.stringify({
+        ok: true,
+        assistanceOptions: updated.assistanceOptions,
+        note: "These are possibilities from stored public evidence, not confirmed eligibility.",
+      });
+    } catch {
+      return JSON.stringify({
+        error: "assistance_failed",
+        message: "Assistance options could not be loaded.",
+      });
+    }
+  });
+
+  useConversationClientTool("generate_action_plan", async () => {
+    const current = analysisRef.current;
+    try {
+      const res = await fetch(
+        `/api/analyses/${encodeURIComponent(current.id)}/action-plan`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        return JSON.stringify({
+          error: "action_plan_failed",
+          message: "The action plan could not be generated.",
+        });
+      }
+      const updated = (await res.json()) as Analysis;
+      await onUpdatedRef.current();
+      return JSON.stringify({
+        ok: true,
+        actionPlan: updated.actionPlan,
+      });
+    } catch {
+      return JSON.stringify({
+        error: "action_plan_failed",
+        message: "The action plan could not be generated.",
+      });
     }
   });
 
@@ -207,13 +341,33 @@ function AgentRuntimeControls({
       });
       stream.getTracks().forEach((track) => track.stop());
 
+      const current = analysisRef.current;
+      const findingsBrief = current.findings
+        .slice(0, 3)
+        .map((finding, index) => `${index + 1}. ${finding.id}: ${finding.title}`)
+        .join(" | ");
+      const caseBrief =
+        `${current.hospitalName}; service ${current.serviceDate ?? "unknown"}; ` +
+        `total ${formatCents(current.totalBilledCents)}; ` +
+        `${current.lineItems.length} line items; ${current.findings.length} findings` +
+        (findingsBrief ? ` (${findingsBrief})` : "");
+
       const overrides: StartSessionOptions["overrides"] = {
         agent: {
           language: toAgentLanguage(language),
           firstMessage: firstMessageForLanguage(language),
         },
       };
-      const dynamicVariables = { analysis_id: analysisId };
+      // Keep dynamic vars compact. Full JSON is available via client tool get_case_context.
+      const dynamicVariables = {
+        analysis_id: analysisId,
+        hospital_name: current.hospitalName,
+        hospital_id: current.hospitalId ?? "",
+        service_date: current.serviceDate ?? "",
+        total_billed: formatCents(current.totalBilledCents),
+        finding_count: String(current.findings.length),
+        case_brief: caseBrief,
+      };
 
       setTranscript([]);
 
