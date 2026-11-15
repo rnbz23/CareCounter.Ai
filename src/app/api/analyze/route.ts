@@ -1,6 +1,7 @@
 import { createAnalysis } from "@/lib/analysis/create";
 import {
   assertBillSize,
+  assertPdfPageLimit,
   assertSupportedMimeType,
   BillInputError,
 } from "@/lib/billing/input";
@@ -61,6 +62,7 @@ async function billInput(formData: FormData): Promise<ExtractBillInput> {
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (file.type === "application/pdf") {
+    await assertPdfPageLimit(bytes);
     return { inputType: "pdf", bytes, mimeType: file.type };
   }
 

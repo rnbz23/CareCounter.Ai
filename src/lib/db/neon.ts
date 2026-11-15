@@ -164,6 +164,58 @@ export async function getSourceEvidence(ids: string[]): Promise<Evidence[]> {
   });
 }
 
+export async function getPublicResourceEvidence(input: {
+  hospitalId: string | null;
+  kinds: Array<
+    | "hospital_assistance"
+    | "insurer_policy"
+    | "insurer_contact"
+    | "government_program"
+    | "nonprofit_program"
+  >;
+}): Promise<Evidence[]> {
+  if (input.kinds.length === 0) return [];
+
+  return run(async () => {
+    const rows = await database().query(
+      `SELECT payload
+       FROM source_evidence
+       WHERE payload->>'kind' = ANY($1::text[])
+         AND (
+           payload->>'hospitalId' IS NULL
+           OR payload->>'hospitalId' = $2
+         )
+       ORDER BY id`,
+      [input.kinds, input.hospitalId],
+    );
+    return rows.map((row) =>
+      EvidenceSchema.parse((row as { payload: unknown }).payload),
+    );
+  });
+}
+
+export async function savePublicResourceEvidence(
+  resources: Evidence[],
+): Promise<void> {
+  const validated = resources.map((resource) => EvidenceSchema.parse(resource));
+  if (validated.length === 0) return;
+
+  return run(async () => {
+    const sql = database();
+    await sql.transaction((transaction) =>
+      validated.map((evidence) =>
+        transaction.query(
+          `INSERT INTO source_evidence (id, payload, created_at)
+           VALUES ($1, $2::jsonb, NOW())
+           ON CONFLICT (id) DO UPDATE
+           SET payload = EXCLUDED.payload, created_at = NOW()`,
+          [evidence.id, JSON.stringify(evidence)],
+        ),
+      ),
+    );
+  });
+}
+
 export async function savePublicPriceSnapshot(
   snapshot: PublicPriceSnapshotRecord[],
 ): Promise<void> {

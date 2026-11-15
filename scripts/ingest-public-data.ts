@@ -1,6 +1,7 @@
 import { Readable } from "node:stream";
 
 import { fetchPublicPageWithBrightData } from "../src/lib/data/bright-data";
+import { fetchPublicResourceEvidence } from "../src/lib/data/public-resources";
 import {
   extractSharpSelectedPrices,
   findSharpMachineReadableFile,
@@ -8,10 +9,16 @@ import {
   SHARP_MEMORIAL_LOCATION,
   SHARP_PRICE_INDEX_URL,
 } from "../src/lib/data/sharp-prices";
-import { savePublicPriceSnapshot } from "../src/lib/db/neon";
+import {
+  savePublicPriceSnapshot,
+  savePublicResourceEvidence,
+} from "../src/lib/db/neon";
 
 async function main(): Promise<void> {
-  const discovery = await fetchPublicPageWithBrightData(SHARP_PRICE_INDEX_URL);
+  const [discovery, resourceEvidence] = await Promise.all([
+    fetchPublicPageWithBrightData(SHARP_PRICE_INDEX_URL),
+    fetchPublicResourceEvidence(),
+  ]);
   const source = findSharpMachineReadableFile(
     discovery.content,
     SHARP_MEMORIAL_LOCATION,
@@ -45,12 +52,14 @@ async function main(): Promise<void> {
   }
 
   await savePublicPriceSnapshot(snapshot);
+  await savePublicResourceEvidence(resourceEvidence);
   console.info(
     JSON.stringify({
       event: "public_price_snapshot_saved",
       hospital: SHARP_MEMORIAL_LOCATION,
       codeCount: foundCodes.size,
       priceRecordCount: snapshot.length,
+      publicResourceCount: resourceEvidence.length,
     }),
   );
 }
