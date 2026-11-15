@@ -1,215 +1,151 @@
 # CareCounter
 
-**SanD Hacks Fall 2026** · [Event site](https://hackathon.csesatucsd.com) · [Devpost](https://sand-hacks-26.devpost.com/)
+CareCounter is a multilingual medical-bill review assistant. It extracts structured charges from a PDF, image, or pasted text; flags charges worth reviewing; and provides a voice-guided explanation that highlights the relevant area of the original bill as it speaks.
 
-**Live app:** [carecounterai.health](https://carecounterai.health) · [GitHub](https://github.com/rnbz23/CareCounter.Ai) · [Vercel fallback](https://carecounter-ai.vercel.app)
+**Live app:** [carecounterai.health](https://carecounterai.health)
 
-Multilingual AI medical billing assistant. Upload a hospital statement, review flagged charges against public prices, talk with a billing guide that highlights line items as it speaks, and leave with a clear next-steps plan.
+> CareCounter identifies questions a user may want to ask a billing office. It does not determine that a charge is incorrect and does not provide medical, legal, or financial advice.
 
-CareCounter surfaces **questions to ask** — never confirmed overcharges, guaranteed savings, or medical/legal advice. Patients should not share SSNs, member IDs, account numbers, or passwords with the app.
+## Features
 
----
+- PDF, image, and text bill intake
+- Gemini-powered structured extraction with Zod validation
+- Duplicate-charge and public-price findings
+- Original-document overlays linked to extracted line-item coordinates
+- ElevenLabs voice guidance with synchronized bill highlighting
+- Multilingual voice and transcript support
+- Insurance, assistance, and next-step planning
+- Neon persistence for analyses, prices, and supporting evidence
+- Offline Bright Data ingestion for public hospital resources
 
-## Problem
+## How it works
 
-Hospital bills are dense, coded, and stressful. Patients often cannot tell which charges are worth questioning, how public hospital prices compare, or where to find assistance — and calling billing without a plan is hard.
+1. The user submits a bill to `POST /api/analyze`.
+2. Gemini extracts the hospital, service date, total, and line items into the shared schema in `src/types/contracts.ts`.
+3. CareCounter computes findings and saves the analysis in Neon.
+4. The analysis workspace displays the original document on the left and the ElevenLabs guide on the right.
+5. Voice tool calls reference stable finding and line-item IDs. The UI uses those IDs and extracted coordinates to focus the matching area of the bill.
+6. Assistance and action-plan APIs enrich the saved analysis with evidence-backed next steps.
 
-## Solution
+Bright Data is not called during bill analysis. It is used only by the offline ingestion script to fetch public price and assistance resources, which are then stored in Neon.
 
-CareCounter turns a statement into a guided review:
+## Tech stack
 
-1. **Analyze** — Upload PDF, photo, or pasted charges.
-2. **Understand** — Review the original bill in a scrollable left workspace while the separately scrollable voice guide stays fixed on the right. As the guide speaks, the bill automatically focuses and overlays the exact line item being discussed.
-3. **Plan** — Get payment context, public assistance leads, and a short action checklist.
+- Next.js 16, React 19, TypeScript, and Tailwind CSS
+- Gemini for bill extraction
+- Neon Postgres for persistence and public-price evidence
+- ElevenLabs for the conversational voice guide
+- Bright Data Web Unlocker for offline public-data ingestion
+- Zod for shared runtime contracts
+- Vercel for production hosting
 
----
+## Local development
 
-## SanD Hacks tracks we built for
+### Requirements
 
-You may submit to multiple tracks. CareCounter is built to compete in:
+- Node.js 20 or newer
+- A Gemini API key
+- A Neon Postgres database
+- An ElevenLabs conversational agent
+- Bright Data credentials only if running the public-data ingestion script
 
-| Track | How we use it in CareCounter |
-| --- | --- |
-| **🏆 Best Overall Hack** | End-to-end product: intake → extraction → price/findings UI → multilingual voice guide → action plan, with a real demo path (not a slide-only pitch). |
-| **Bright Data — Data for Good** | Offline ingest via Bright Data Web Unlocker snapshots **public** hospital price lists and assistance/contact pages into Neon. That evidence powers price-difference findings and assistance options so patients can investigate bills with real public sources — social impact without scraping on the live request path. |
-| **ElevenLabs — Best Project Built with ElevenLabs** | Conversational **Hospital Billing Guide** (`AgentRuntime` + `@elevenlabs/react`): multilingual voice/text, client tools for `focus_target` / insurance / assistance / action-plan, and transcript UI that strips voice-delivery tags (e.g. `[friendly]`) so patients only see the spoken message. |
-| **Neon — Best Database-Driven / Agent Backend** | Serverless Postgres for analyses, price rows, and public-resource evidence. Case APIs (`/api/analyze`, `/api/analyses/...`, `/api/agent/tools`) read/write Neon so the voice agent and UI share one durable backend. |
-| **MLH — Best Use of Gemini API** | Gemini structured extraction (`src/lib/gemini/extract.ts`) turns PDF/image/text bills into validated line items and metadata (Zod schemas), with retry/repair — the foundation every later step uses. |
-
-### Sponsor tech map (short)
-
-- **Bright Data** → `src/lib/data/bright-data.ts`, `scripts/ingest-public-data.ts` (offline only; every team also receives event API credits).
-- **ElevenLabs** → `src/components/voice/AgentRuntime.tsx`, `VoicePanel`, `POST /api/agent/tools`.
-- **Neon** → `src/lib/db/neon.ts`, `db/001_init.sql`, analysis + evidence persistence.
-- **Gemini** → `src/lib/gemini/extract.ts`, `POST /api/analyze`.
-
----
-
-## Demo flow (for judges)
-
-1. Open [carecounterai.health](https://carecounterai.health) → upload a synthetic bill from `sampledata/` (or paste charges).
-2. Land on **Understand**: the document, synchronized overlays, and next steps scroll on the left; the billing guide remains fixed and independently scrollable on the right.
-3. Ask about a flagged charge — the guide should **focus and highlight** the exact matching bill target (ID-based focus, not transcript guessing).
-4. Open **Plan** for next steps, assistance leads, and checklist.
-5. Optional: switch guide language via the language selector.
-
-Synthetic fixtures (not real patient records):
-
-- `sampledata/carecounter-synthetic-bill.pdf`
-- `sampledata/carecounter-synthetic-bill.png` / `carecounter-synthetic-bill-v2.png`
-
----
-
-## Stack
-
-- **Next.js 16** / React 19 / TypeScript / Tailwind
-- **Gemini** — bill extraction
-- **Neon** — analyses, prices, public-resource evidence
-- **Bright Data** — offline public-data ingest
-- **ElevenLabs** — conversational billing guide
-- **Zod** — shared contracts in `src/types/contracts.ts`
-- **Vercel** — GitHub-connected Next.js production hosting and custom-domain TLS
-
----
-
-## Production deployment
-
-CareCounter is deployed from GitHub to Vercel:
-
-| Item | Current production configuration |
-| --- | --- |
-| Source repository | [`rnbz23/CareCounter.Ai`](https://github.com/rnbz23/CareCounter.Ai) |
-| Production branch | `main` |
-| Vercel project | `carecounterai/carecounter-ai` |
-| Primary URL | [https://carecounterai.health](https://carecounterai.health) |
-| Additional URL | [https://www.carecounterai.health](https://www.carecounterai.health) |
-| Vercel URL | [https://carecounter-ai.vercel.app](https://carecounter-ai.vercel.app) |
-| Deployment trigger | Every push/merge to `main` |
-
-The custom domain remains registered at Porkbun and uses these Vercel-provided DNS records:
-
-| Type | Host | Value |
-| --- | --- | --- |
-| `A` | `@` | `216.198.79.1` |
-| `A` | `@` | `64.29.17.1` |
-| `CNAME` | `www` | `afbc59203def2919.vercel-dns-017.com` |
-
-### Verified production checks
-
-Verified against the deployed application on November 15, 2026:
-
-- `GET /` returned HTTP `200` on the apex, `www`, and Vercel domains.
-- A synthetic text bill passed through Gemini extraction (`POST /api/analyze`, HTTP `201`).
-- The resulting analysis reloaded from Neon with the same ID and total (HTTP `200`).
-- The protected ElevenLabs server-tool context path returned HTTP `200` with the configured secret.
-- Bright Data remains outside the live request path and is used only by the offline ingest script.
-
-### Deploying updates
-
-Vercel automatically creates a preview deployment for non-production branches. Merge a tested pull request into `main` to deploy production:
-
-```bash
-git switch -c feature/my-change
-git add .
-git commit -m "Describe the change"
-git push -u origin feature/my-change
-```
-
-After merging the pull request, verify the production deployment in Vercel and smoke-test [carecounterai.health](https://carecounterai.health). Environment-variable changes apply only to a new deployment, so redeploy after changing them.
-
----
-
-## Quick start
+### Setup
 
 ```bash
 npm ci
 cp .env.example .env.local
-# fill credentials (table below)
-
-# Snapshot public Sharp prices + assistance sources into Neon (Bright Data offline path)
-npm run ingest:public-data
-
+# Add the required values to .env.local
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Environment
-
-Never commit secrets or expose server keys as `NEXT_PUBLIC_*`.
+## Environment variables
 
 | Variable | Exposure | Purpose |
 | --- | --- | --- |
-| `GEMINI_API_KEY` / `GEMINI_MODEL` | Server only | Gemini bill extraction |
-| `DATABASE_URL` / `DATABASE_URL_UNPOOLED` | Server only | Neon pooled application traffic + direct migration connection |
-| `BRIGHTDATA_API_KEY` / `BRIGHTDATA_UNLOCKER_ZONE` | Server only, offline | Public-data ingest; not required by the live web request path |
-| `NEXT_PUBLIC_USE_MOCK_ANALYSIS` | Browser visible | Must be exactly `false` for live APIs |
+| `GEMINI_API_KEY` | Server only | Gemini API credential |
+| `GEMINI_MODEL` | Server only | Gemini extraction model |
+| `DATABASE_URL` | Server only | Pooled Neon connection for application traffic |
+| `DATABASE_URL_UNPOOLED` | Server only | Direct Neon connection for migrations |
+| `NEXT_PUBLIC_USE_MOCK_ANALYSIS` | Browser visible | Set to `false` to use the live analysis APIs |
 | `NEXT_PUBLIC_ELEVENLABS_AGENT_ID` | Browser visible | Public ElevenLabs agent ID |
-| `ELEVENLABS_TOOL_SECRET` | Server only | Protects `POST /api/agent/tools` via `X-Agent-Tool-Secret` |
+| `ELEVENLABS_TOOL_SECRET` | Server only | Protects `POST /api/agent/tools` |
+| `BRIGHTDATA_API_KEY` | Server only | Bright Data credential for offline ingestion |
+| `BRIGHTDATA_UNLOCKER_ZONE` | Server only | Bright Data Web Unlocker zone |
 
-For Vercel Production, configure every variable above except the Bright Data pair, which is only needed where `npm run ingest:public-data` is executed. If the ElevenLabs dashboard uses the protected server tool, set its endpoint to:
+Never commit `.env.local`. Do not place API keys, database credentials, or `ELEVENLABS_TOOL_SECRET` in a `NEXT_PUBLIC_*` variable.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local development server |
+| `npm run build` | Create a production build |
+| `npm start` | Run the production build |
+| `npm test` | Run the Vitest test suite |
+| `npm run typecheck` | Generate Next.js types and run TypeScript checks |
+| `npm run lint` | Run ESLint |
+| `npm run ingest:public-data` | Fetch public resources through Bright Data and store them in Neon |
+
+## Main routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Bill upload and text intake |
+| `/analysis/[analysisId]` | Bill review, synchronized highlighting, and voice guide |
+| `/analysis/[analysisId]/plan` | Assistance and next-step plan |
+| `POST /api/analyze` | Extract, analyze, and persist a bill |
+| `GET /api/analyses/[analysisId]` | Load a saved analysis |
+| `POST /api/agent/tools` | Protected server tools for the ElevenLabs agent |
+
+## Project structure
 
 ```text
-https://carecounterai.health/api/agent/tools
+src/app/                         Next.js pages and API routes
+src/components/intake/           Bill intake UI
+src/components/analysis/         Analysis workspace and document highlighting
+src/components/voice/            ElevenLabs runtime and voice UI
+src/lib/gemini/                  Structured bill extraction
+src/lib/db/                      Neon data access
+src/lib/analysis/                Findings, context, and analysis services
+src/lib/data/                    Bright Data and public-resource helpers
+src/lib/insurance/               Assistance and action-plan logic
+src/types/contracts.ts           Shared Zod schemas and TypeScript types
+db/                              Database migrations
+scripts/                         Offline data-ingestion scripts
+sampledata/                      Synthetic test bills
+tests/                           Automated tests
+docs/                            Implementation and integration notes
 ```
 
-Configure the same server secret in its `X-Agent-Tool-Secret` request header. Never place this secret in a `NEXT_PUBLIC_*` variable.
+## Testing
 
-### Scripts
+Run the automated checks before merging:
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Local app |
-| `npm run build` / `npm start` | Production |
-| `npm test` | Vitest |
-| `npm run typecheck` | Next typegen + `tsc` |
-| `npm run lint` | ESLint |
-| `npm run ingest:public-data` | Bright Data → Neon public prices/resources |
-
-### Routes
-
-| Path | Role |
-| --- | --- |
-| `/` | Home + upload |
-| `/analysis/[id]` | Findings + billing guide |
-| `/analysis/[id]/plan` | Next steps |
-
----
-
-## Team
-
-| Member | Focus |
-| --- | --- |
-| Sahil (SG2407) | Intake UI, two-pane analysis workspace, document overlays/highlighting, VoicePanel shell |
-| Raja | Analyze APIs, Gemini, pricing, Neon, public-data ingest |
-| Sumedh | ElevenLabs `AgentRuntime`, insurance/assistance logic, agent tools |
-
-Shared contracts: `src/types/contracts.ts`. Focus callback:
-
-```ts
-onFocus: (focus: FocusTarget) => string
-// "focused" | "unknown_target" | "cleared"
+```bash
+npm test
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-AgentRuntime must call `onFocus` with IDs from the current `Analysis` only.
+For an end-to-end check, upload a synthetic bill from `sampledata/`, confirm that the generated analysis survives a refresh, and verify that the voice guide highlights the correct line item.
 
----
+## Deployment
 
-## Devpost / event checklist (SanD Hacks)
+The GitHub repository is connected to the Vercel project `carecounterai/carecounter-ai`.
 
-Per the Hacker Guide:
+- Pushes to feature branches create preview deployments.
+- Merges to `main` deploy to [carecounterai.health](https://carecounterai.health).
+- Production secrets are configured in Vercel, not committed to the repository.
+- Environment-variable changes require a new deployment.
 
-- Submit on [Devpost](https://sand-hacks-26.devpost.com/) with: **3-minute public video**, short write-up, **GitHub repo**, optional live demo.
-- Initial placeholder due **Sunday 11:00 AM**; final video/write-up/links due **Sunday 12:00 noon** — no project changes after noon.
-- Stay in Slack; be present for check-in, judging, and awards (in-person).
-- Judging is science-fair style: ~3 min present + ~2 min Q&A; criteria are Idea, Demo, Technical Complexity, Completion (not code-comment polish).
+If the ElevenLabs agent uses the protected server-tool endpoint, configure it as:
 
----
+```text
+POST https://carecounterai.health/api/agent/tools
+X-Agent-Tool-Secret: <ELEVENLABS_TOOL_SECRET>
+```
 
-## Docs
-
-- `docs/CARECOUNTER_TEAM_INTEGRATION_MASTER.md`
-- `docs/RAJA_BACKEND_HANDOFF.md`
-- `docs/ELEVENLABS_LANGUAGES.md`
-- `docs/INTEGRATION_TEAM_MERGE_CHANGES.md`
-- `AGENTS.md`
+Use synthetic data for demonstrations. Do not upload real patient bills until appropriate privacy, security, retention, and compliance controls are in place.
