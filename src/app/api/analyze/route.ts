@@ -11,6 +11,7 @@ import {
   GeminiProviderError,
   type ExtractBillInput,
 } from "@/lib/gemini/extract";
+import { DatabaseError, saveAnalysis } from "@/lib/db/neon";
 
 export const runtime = "nodejs";
 
@@ -85,6 +86,7 @@ export async function POST(request: Request): Promise<Response> {
       inputType: input.inputType,
       hospitalId: stringField(formData, "hospitalId"),
     });
+    await saveAnalysis(analysis);
 
     return Response.json(analysis, { status: 201 });
   } catch (error) {
@@ -106,6 +108,10 @@ export async function POST(request: Request): Promise<Response> {
 
     if (error instanceof BillExtractionError) {
       return errorResponse("EXTRACTION_INVALID", error.message, 422);
+    }
+
+    if (error instanceof DatabaseError) {
+      return errorResponse(error.code, error.message, 503);
     }
 
     return errorResponse(
