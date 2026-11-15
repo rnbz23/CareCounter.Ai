@@ -1,6 +1,11 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
 import {
+  PublicPriceSnapshotRecordSchema,
+  type HospitalPriceType,
+  type PublicPriceSnapshotRecord,
+} from "@/lib/data/public-prices";
+import {
   AnalysisSchema,
   EvidenceSchema,
   type Analysis,
@@ -9,11 +14,7 @@ import {
 
 type Sql = NeonQueryFunction<false, false>;
 
-export type HospitalPriceType =
-  | "gross"
-  | "discounted_cash"
-  | "payer_negotiated"
-  | "medicare";
+export type { HospitalPriceType } from "@/lib/data/public-prices";
 
 export interface HospitalPriceRow {
   id: string;
@@ -159,6 +160,53 @@ export async function getSourceEvidence(ids: string[]): Promise<Evidence[]> {
     );
     return rows.map((row) =>
       EvidenceSchema.parse((row as { payload: unknown }).payload),
+    );
+  });
+}
+
+export async function savePublicPriceSnapshot(
+  snapshot: PublicPriceSnapshotRecord[],
+): Promise<void> {
+  const validated = snapshot.map((record) =>
+    PublicPriceSnapshotRecordSchema.parse(record),
+  );
+  if (validated.length === 0) return;
+
+  return run(async () => {
+    const sql = database();
+    await sql.transaction((transaction) =>
+      validated.flatMap(({ price, evidence }) => [
+        transaction.query(
+          `INSERT INTO source_evidence (id, payload, created_at)
+           VALUES ($1, $2::jsonb, NOW())
+           ON CONFLICT (id) DO UPDATE
+           SET payload = EXCLUDED.payload, created_at = NOW()`,
+          [evidence.id, JSON.stringify(evidence)],
+        ),
+        transaction.query(
+          `INSERT INTO hospital_prices
+             (id, hospital_id, code, price_type, amount_cents,
+              unit_semantics, evidence_id, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+           ON CONFLICT (id) DO UPDATE
+           SET hospital_id = EXCLUDED.hospital_id,
+               code = EXCLUDED.code,
+               price_type = EXCLUDED.price_type,
+               amount_cents = EXCLUDED.amount_cents,
+               unit_semantics = EXCLUDED.unit_semantics,
+               evidence_id = EXCLUDED.evidence_id,
+               created_at = NOW()`,
+          [
+            price.id,
+            price.hospitalId,
+            price.code,
+            price.priceType,
+            price.amountCents,
+            price.unitSemantics,
+            price.evidenceId,
+          ],
+        ),
+      ]),
     );
   });
 }
