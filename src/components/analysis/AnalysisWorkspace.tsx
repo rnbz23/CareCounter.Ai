@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Analysis, FocusTarget } from "@/types/contracts";
 import { applyFocusTarget } from "@/lib/analysis/focus";
+import { getAnalysisById } from "@/lib/api/analysis";
 import {
   LanguageSelector,
   SUPPORTED_LANGUAGES,
@@ -15,15 +16,22 @@ import { AnalysisSummary } from "./AnalysisSummary";
 import { FindingCard } from "./FindingCard";
 import { LineItemsTable } from "./LineItemsTable";
 import { AssistanceCard } from "./AssistanceCard";
+import { PaymentPathCard } from "./PaymentPathCard";
 import { VoicePanel } from "@/components/voice/VoicePanel";
 import { cn } from "@/lib/utils";
 
 type MobileTab = "findings" | "document" | "aid";
 
-export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
+export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Analysis }) {
+  const [analysis, setAnalysis] = useState(initialAnalysis);
   const [activeFocus, setActiveFocus] = useState<FocusTarget | null>(null);
   const [language, setLanguage] = useState<LanguageCode>("en");
   const [mobileTab, setMobileTab] = useState<MobileTab>("findings");
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAnalysis(initialAnalysis);
+  }, [initialAnalysis]);
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem("cc_language");
@@ -45,6 +53,8 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
           setMobileTab("aid");
         } else if (focus.targetType === "line_item") {
           setMobileTab("document");
+        } else if (focus.targetType === "payment") {
+          setMobileTab("aid");
         } else {
           setMobileTab("findings");
         }
@@ -57,6 +67,20 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
   const clearFocus = useCallback(() => {
     applyFocusTarget(analysis, null, setActiveFocus);
   }, [analysis]);
+
+  const refreshAnalysis = useCallback(async () => {
+    try {
+      const next = await getAnalysisById(analysis.id);
+      setAnalysis(next);
+      setRefreshError(null);
+    } catch (error) {
+      setRefreshError(
+        error instanceof Error
+          ? error.message
+          : "Could not refresh this case from the server.",
+      );
+    }
+  }, [analysis.id]);
 
   const relatedLineIds = useMemo(() => {
     if (!activeFocus || activeFocus.targetType !== "finding") return [];
@@ -83,8 +107,13 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
         width="wide"
         className="flex min-h-0 flex-1 flex-col gap-5 py-4 lg:h-[calc(100vh-4rem)] lg:overflow-hidden lg:py-5"
       >
+        {refreshError ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
+            Voice update could not refresh this case: {refreshError}. Text findings remain available.
+          </p>
+        ) : null}
+
         <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)] lg:gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)]">
-          {/* Left ~60% */}
           <section className="min-h-0 min-w-0 lg:overflow-y-auto lg:pr-1 cc-scrollbar">
             <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
               <LanguageSelector
@@ -196,15 +225,29 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
                 </p>
               </div>
               <div className="space-y-3.5">
-                {analysis.assistanceOptions.map((option) => (
-                  <AssistanceCard
-                    key={option.id}
-                    option={option}
-                    activeFocus={activeFocus}
-                    onActivate={handleFocus}
-                  />
-                ))}
+                {analysis.assistanceOptions.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-ink-200 bg-white/70 px-4 py-5 text-sm text-ink-500">
+                    Assistance options appear after insurance answers are saved and public resources are loaded.
+                  </p>
+                ) : (
+                  analysis.assistanceOptions.map((option) => (
+                    <AssistanceCard
+                      key={option.id}
+                      option={option}
+                      activeFocus={activeFocus}
+                      onActivate={handleFocus}
+                    />
+                  ))
+                )}
               </div>
+
+              {analysis.actionPlan ? (
+                <PaymentPathCard
+                  plan={analysis.actionPlan}
+                  activeFocus={activeFocus}
+                  onActivate={handleFocus}
+                />
+              ) : null}
 
               <Link
                 href={`/analysis/${analysis.id}/plan`}
@@ -219,7 +262,6 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
             </div>
           </section>
 
-          {/* Right ~40% sticky voice */}
           <aside className="hidden min-h-0 min-w-0 lg:block">
             <div className="h-full min-h-[560px]">
               <VoicePanel
@@ -228,6 +270,7 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
                 onLanguageChange={setLanguage}
                 onFocus={handleFocus}
                 onClearFocus={clearFocus}
+                onUpdated={refreshAnalysis}
               />
             </div>
           </aside>
@@ -241,6 +284,7 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
           onLanguageChange={setLanguage}
           onFocus={handleFocus}
           onClearFocus={clearFocus}
+          onUpdated={refreshAnalysis}
           compact
         />
       </div>
