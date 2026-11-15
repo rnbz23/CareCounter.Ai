@@ -5,6 +5,8 @@ import {
   EMPTY_INSURANCE,
   type Analysis,
   type BillExtraction,
+  type Evidence,
+  type Finding,
 } from "@/types/contracts";
 
 export interface CreateAnalysisInput {
@@ -13,6 +15,8 @@ export interface CreateAnalysisInput {
   hospitalId?: string | null;
   now?: Date;
   id?: string;
+  findings?: Finding[];
+  evidence?: Evidence[];
 }
 
 export function createAnalysis({
@@ -21,6 +25,8 @@ export function createAnalysis({
   hospitalId = null,
   now = new Date(),
   id = `analysis_${randomUUID()}`,
+  findings = [],
+  evidence = [],
 }: CreateAnalysisInput): Analysis {
   return AnalysisSchema.parse({
     id,
@@ -31,8 +37,8 @@ export function createAnalysis({
     serviceDate: extraction.serviceDate,
     totalBilledCents: extraction.totalBilledCents,
     lineItems: extraction.lineItems,
-    findings: [],
-    evidence: [],
+    findings,
+    evidence,
     insurance: EMPTY_INSURANCE,
     assistanceOptions: [],
     actionPlan: null,

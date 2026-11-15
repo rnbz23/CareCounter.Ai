@@ -12,6 +12,7 @@ import {
   type ExtractBillInput,
 } from "@/lib/gemini/extract";
 import { DatabaseError, saveAnalysis } from "@/lib/db/neon";
+import { compareBill } from "@/lib/pricing/compare";
 
 export const runtime = "nodejs";
 
@@ -81,10 +82,13 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const input = await billInput(formData);
     const extraction = await extractBill(input);
+    const comparison = compareBill(extraction);
     const analysis = createAnalysis({
       extraction,
       inputType: input.inputType,
       hospitalId: stringField(formData, "hospitalId"),
+      findings: comparison.findings,
+      evidence: comparison.evidence,
     });
     await saveAnalysis(analysis);
 
