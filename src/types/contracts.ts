@@ -106,6 +106,26 @@ export const ActionPlanSchema = z.object({
 });
 export type ActionPlan = z.infer<typeof ActionPlanSchema>;
 
+export const FundraiseFormatSchema = z.enum(["email", "campaign"]);
+export type FundraiseFormat = z.infer<typeof FundraiseFormatSchema>;
+
+export const FundraiseRequestSchema = z.object({
+  format: FundraiseFormatSchema,
+  goalCents: MoneyCents,
+  audience: z.string().trim().max(80).nullable(),
+  personalNote: z.string().trim().max(600).nullable(),
+});
+export type FundraiseRequest = z.infer<typeof FundraiseRequestSchema>;
+
+export const FundraiseDraftSchema = z.object({
+  format: FundraiseFormatSchema,
+  subject: z.string().max(160).nullable(),
+  title: z.string().max(160).nullable(),
+  body: z.string().min(1).max(12000),
+  shareText: z.string().max(500).nullable(),
+});
+export type FundraiseDraft = z.infer<typeof FundraiseDraftSchema>;
+
 export const AnalysisSchema = z.object({
   id: Id, // analysis_... or uuid; treat as opaque
   hospitalId: z.string().nullable(),

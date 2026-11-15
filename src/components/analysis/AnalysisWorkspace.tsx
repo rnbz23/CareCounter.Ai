@@ -17,7 +17,7 @@ import { BillDocument } from "./BillDocument";
 import { FindingCard } from "./FindingCard";
 import { LineItemsTable } from "./LineItemsTable";
 import { AssistanceCard } from "./AssistanceCard";
-import { PaymentPathCard } from "./PaymentPathCard";
+import { FundraiseCard } from "./FundraiseCard";
 import { VoicePanel } from "@/components/voice/VoicePanel";
 import { cn } from "@/lib/utils";
 
@@ -253,13 +253,11 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
                 )}
               </div>
 
-              {analysis.actionPlan ? (
-                <PaymentPathCard
-                  plan={analysis.actionPlan}
-                  activeFocus={activeFocus}
-                  onActivate={handleFocus}
-                />
-              ) : null}
+              {/* The plan page owns the full action checklist; this screen keeps a
+                  single, non-duplicative path to fundraising help. */}
+              <div className="lg:hidden">
+                <FundraiseCard analysis={analysis} variant="inline" />
+              </div>
 
               <Link
                 href={`/analysis/${analysis.id}/plan`}
@@ -283,38 +281,45 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
           >
             <div
               className={cn(
-                "h-full min-h-0",
-                conversationOpen
-                  ? "mx-auto grid max-w-[1560px] gap-4 lg:grid-cols-[minmax(0,1fr)_470px] lg:gap-5 xl:grid-cols-[minmax(0,1fr)_560px]"
-                  : "h-[min(620px,calc(100vh-7rem))] min-h-[480px]",
+                "flex min-h-0 flex-col gap-3",
+                conversationOpen ? "h-full" : "h-[calc(100vh-6.5rem)]",
               )}
             >
               <div
                 className={cn(
-                  "min-h-0",
-                  conversationOpen ? "cc-bill-stage" : "hidden",
+                  "min-h-0 flex-1",
+                  conversationOpen &&
+                    "mx-auto grid w-full max-w-[1560px] gap-4 lg:grid-cols-[minmax(0,1fr)_470px] lg:gap-5 xl:grid-cols-[minmax(0,1fr)_560px]",
                 )}
               >
-                {conversationOpen ? (
-                  <BillDocument analysis={analysis} activeFocus={activeFocus} />
-                ) : null}
+                <div
+                  className={cn(
+                    "min-h-0",
+                    conversationOpen ? "cc-bill-stage" : "hidden",
+                  )}
+                >
+                  {conversationOpen ? (
+                    <BillDocument analysis={analysis} activeFocus={activeFocus} />
+                  ) : null}
+                </div>
+                <div
+                  className={cn(
+                    "min-h-0",
+                    conversationOpen ? "cc-agent-stage" : "h-full",
+                  )}
+                >
+                  <VoicePanel
+                    analysis={analysis}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                    onFocus={handleFocus}
+                    onClearFocus={clearFocus}
+                    onUpdated={refreshAnalysis}
+                    onConnectionChange={handleConnectionChange}
+                  />
+                </div>
               </div>
-              <div
-                className={cn(
-                  "min-h-0",
-                  conversationOpen ? "cc-agent-stage" : "h-full",
-                )}
-              >
-                <VoicePanel
-                  analysis={analysis}
-                  language={language}
-                  onLanguageChange={setLanguage}
-                  onFocus={handleFocus}
-                  onClearFocus={clearFocus}
-                  onUpdated={refreshAnalysis}
-                  onConnectionChange={handleConnectionChange}
-                />
-              </div>
+              {!conversationOpen ? <FundraiseCard analysis={analysis} /> : null}
             </div>
           </aside>
         </div>
