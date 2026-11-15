@@ -34,7 +34,7 @@ export function UploadCard() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("");
   const [language, setLanguage] = useState<LanguageCode>("en");
-  const [hospitalId, setHospitalId] = useState("auto");
+  const [hospitalId, setHospitalId] = useState("sharp-memorial-hospital");
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -190,8 +190,8 @@ export function UploadCard() {
             onChange={(e) => setHospitalId(e.target.value)}
             className="cc-select w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm outline-none"
           >
-            <option value="auto">Auto-detect</option>
             <option value="sharp-memorial-hospital">Sharp Memorial Hospital</option>
+            <option value="auto">Auto-detect (no price match)</option>
           </select>
         </label>
       </div>

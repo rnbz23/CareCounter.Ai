@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
-import { getAnalysisById } from "@/lib/api/analysis";
+import { DatabaseError, getAnalysis } from "@/lib/db/neon";
 import { AnalysisWorkspace } from "@/components/analysis/AnalysisWorkspace";
+
+export const runtime = "nodejs";
 
 export default async function AnalysisPage({
   params,
@@ -11,8 +13,11 @@ export default async function AnalysisPage({
 
   let analysis;
   try {
-    analysis = await getAnalysisById(analysisId);
-  } catch {
+    analysis = await getAnalysis(analysisId);
+  } catch (error) {
+    if (error instanceof DatabaseError) {
+      notFound();
+    }
     notFound();
   }
 
