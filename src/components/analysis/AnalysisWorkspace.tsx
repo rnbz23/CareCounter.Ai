@@ -1,0 +1,248 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import type { Analysis, FocusTarget } from "@/types/contracts";
+import { applyFocusTarget } from "@/lib/analysis/focus";
+import {
+  LanguageSelector,
+  SUPPORTED_LANGUAGES,
+  type LanguageCode,
+} from "@/components/intake/LanguageSelector";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { PageShell } from "@/components/layout/PageShell";
+import { AnalysisSummary } from "./AnalysisSummary";
+import { FindingCard } from "./FindingCard";
+import { LineItemsTable } from "./LineItemsTable";
+import { AssistanceCard } from "./AssistanceCard";
+import { VoicePanel } from "@/components/voice/VoicePanel";
+import { cn } from "@/lib/utils";
+
+type MobileTab = "findings" | "document" | "aid";
+
+export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
+  const [activeFocus, setActiveFocus] = useState<FocusTarget | null>(null);
+  const [language, setLanguage] = useState<LanguageCode>("en");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("findings");
+
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem("cc_language");
+    if (saved === "es" || saved === "zh" || saved === "en") {
+      setLanguage(saved);
+    }
+  }, []);
+
+  const languageLabel =
+    SUPPORTED_LANGUAGES.find((item) => item.code === language)?.label ??
+    "English";
+
+  const handleFocus = useCallback(
+    (focus: FocusTarget): string => {
+      const result = applyFocusTarget(analysis, focus, setActiveFocus);
+      if (result === "focused") {
+        if (focus.targetType === "assistance" || focus.targetType === "step") {
+          setMobileTab("aid");
+        } else if (focus.targetType === "line_item") {
+          setMobileTab("document");
+        } else {
+          setMobileTab("findings");
+        }
+      }
+      return result;
+    },
+    [analysis],
+  );
+
+  const clearFocus = useCallback(() => {
+    applyFocusTarget(analysis, null, setActiveFocus);
+  }, [analysis]);
+
+  const relatedLineIds = useMemo(() => {
+    if (!activeFocus || activeFocus.targetType !== "finding") return [];
+    const finding = analysis.findings.find((f) => f.id === activeFocus.targetId);
+    return finding?.lineItemIds ?? [];
+  }, [activeFocus, analysis.findings]);
+
+  const sortedFindings = useMemo(() => {
+    const rank = { priority: 0, review: 1, info: 2 } as const;
+    return [...analysis.findings].sort(
+      (a, b) => rank[a.severity] - rank[b.severity],
+    );
+  }, [analysis.findings]);
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <AppHeader
+        activeStep="understand"
+        analysisId={analysis.id}
+        languageLabel={languageLabel}
+      />
+
+      <PageShell
+        width="wide"
+        className="flex min-h-0 flex-1 flex-col gap-5 py-4 lg:h-[calc(100vh-4rem)] lg:overflow-hidden lg:py-5"
+      >
+        <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)] lg:gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)]">
+          {/* Left ~60% */}
+          <section className="min-h-0 min-w-0 lg:overflow-y-auto lg:pr-1 cc-scrollbar">
+            <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
+              <LanguageSelector
+                value={language}
+                onChange={setLanguage}
+                compact
+                className="max-w-[180px]"
+              />
+              <button
+                type="button"
+                onClick={clearFocus}
+                className="text-xs font-medium text-ink-500"
+              >
+                Clear highlight
+              </button>
+            </div>
+
+            <AnalysisSummary analysis={analysis} />
+
+            <div className="mt-4 flex gap-1 rounded-xl bg-white p-1 shadow-sm ring-1 ring-ink-200/70 lg:hidden">
+              {(
+                [
+                  ["findings", "Findings"],
+                  ["document", "Charges"],
+                  ["aid", "Help"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMobileTab(key)}
+                  className={cn(
+                    "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    mobileTab === key
+                      ? "bg-navy-950 text-white"
+                      : "text-ink-600",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className={cn(
+                "mt-6 space-y-4 pb-28 lg:pb-10",
+                mobileTab !== "findings" && "hidden lg:block",
+              )}
+            >
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-2xl font-semibold text-navy-950">
+                    Charges worth checking
+                  </h2>
+                  <p className="mt-1 text-sm text-ink-500">
+                    These are possible issues to ask about — not confirmed errors.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearFocus}
+                  className="hidden text-xs font-medium text-ink-500 lg:inline"
+                >
+                  Clear highlight
+                </button>
+              </div>
+
+              <div className="cc-stagger space-y-4">
+                {sortedFindings.map((finding, index) => (
+                  <FindingCard
+                    key={finding.id}
+                    finding={finding}
+                    lineItems={analysis.lineItems}
+                    evidence={analysis.evidence}
+                    activeFocus={activeFocus}
+                    onActivate={handleFocus}
+                    index={index}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                "mt-8 pb-28 lg:pb-10",
+                mobileTab !== "document" && "hidden lg:block",
+              )}
+            >
+              <LineItemsTable
+                lineItems={analysis.lineItems}
+                activeFocus={activeFocus}
+                onActivate={handleFocus}
+                highlightedIds={relatedLineIds}
+              />
+            </div>
+
+            <div
+              className={cn(
+                "mt-8 space-y-4 pb-28 lg:pb-10",
+                mobileTab !== "aid" && "hidden lg:block",
+              )}
+            >
+              <div>
+                <h2 className="font-display text-2xl font-semibold text-navy-950">
+                  Ways you may be able to get help
+                </h2>
+                <p className="mt-1 text-sm text-ink-500">
+                  These are possible options. We never promise eligibility or savings.
+                </p>
+              </div>
+              <div className="space-y-3.5">
+                {analysis.assistanceOptions.map((option) => (
+                  <AssistanceCard
+                    key={option.id}
+                    option={option}
+                    activeFocus={activeFocus}
+                    onActivate={handleFocus}
+                  />
+                ))}
+              </div>
+
+              <Link
+                href={`/analysis/${analysis.id}/plan`}
+                data-cursor="button"
+                onClick={() => {
+                  window.sessionStorage.setItem("cc_enter_from", "analysis");
+                }}
+                className="cc-pressable inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                See my next steps
+              </Link>
+            </div>
+          </section>
+
+          {/* Right ~40% sticky voice */}
+          <aside className="hidden min-h-0 min-w-0 lg:block">
+            <div className="h-full min-h-[560px]">
+              <VoicePanel
+                analysis={analysis}
+                language={language}
+                onLanguageChange={setLanguage}
+                onFocus={handleFocus}
+                onClearFocus={clearFocus}
+              />
+            </div>
+          </aside>
+        </div>
+      </PageShell>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200/80 bg-white/95 p-3 backdrop-blur-xl lg:hidden">
+        <VoicePanel
+          analysis={analysis}
+          language={language}
+          onLanguageChange={setLanguage}
+          onFocus={handleFocus}
+          onClearFocus={clearFocus}
+          compact
+        />
+      </div>
+    </div>
+  );
+}
