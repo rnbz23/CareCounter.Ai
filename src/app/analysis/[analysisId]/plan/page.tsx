@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ensureAnalysisPlanReady } from "@/lib/analysis/ensure-plan";
 import { loadAnalysisForPage } from "@/lib/analysis/load";
 import { formatCents, formatDate } from "@/lib/format";
 import {
@@ -29,6 +30,12 @@ export default async function PlanPage({
   let analysis;
   try {
     analysis = await loadAnalysisForPage(analysisId);
+    if (!analysis) {
+      notFound();
+    }
+    // Fresh analyzes often have null actionPlan until a voice tool runs —
+    // build + persist it here so Understand → Plan always has content.
+    analysis = await ensureAnalysisPlanReady(analysis);
   } catch {
     notFound();
   }

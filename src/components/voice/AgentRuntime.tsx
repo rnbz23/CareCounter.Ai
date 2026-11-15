@@ -25,6 +25,7 @@ import { buildAgentContext } from "@/lib/analysis/agent-context";
 import { isValidFocusTarget } from "@/lib/analysis/focus";
 import { formatCents } from "@/lib/format";
 import { patientFindingTitle } from "@/lib/copy/patient";
+import { stripAgentDeliveryTags } from "@/lib/voice/transcript-text";
 import {
   SUPPORTED_LANGUAGES,
   firstMessageForLanguage,
@@ -130,9 +131,13 @@ export function AgentRuntime({
   const [error, setError] = useState<string | null>(null);
 
   const handleMessage = useCallback((payload: TranscriptMessage) => {
-    const text = payload.message?.trim();
-    if (!text) return;
+    const raw = payload.message?.trim();
+    if (!raw) return;
     const role: TranscriptEntry["role"] = payload.role === "user" ? "user" : "agent";
+    const text =
+      role === "agent" ? stripAgentDeliveryTags(raw) : raw;
+    // Tag-only / whitespace-only chunks can arrive while the agent starts speaking.
+    if (!text) return;
     const id = payload.response_id ?? `event_${payload.event_id}`;
 
     setTranscript((previous) => {
