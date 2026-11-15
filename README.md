@@ -2,6 +2,8 @@
 
 **SanD Hacks Fall 2026** · [Event site](https://hackathon.csesatucsd.com) · [Devpost](https://sand-hacks-26.devpost.com/)
 
+**Live app:** [carecounterai.health](https://carecounterai.health) · [GitHub](https://github.com/rnbz23/CareCounter.Ai) · [Vercel fallback](https://carecounter-ai.vercel.app)
+
 Multilingual AI medical billing assistant. Upload a hospital statement, review flagged charges against public prices, talk with a billing guide that highlights line items as it speaks, and leave with a clear next-steps plan.
 
 CareCounter surfaces **questions to ask** — never confirmed overcharges, guaranteed savings, or medical/legal advice. Patients should not share SSNs, member IDs, account numbers, or passwords with the app.
@@ -17,7 +19,7 @@ Hospital bills are dense, coded, and stressful. Patients often cannot tell which
 CareCounter turns a statement into a guided review:
 
 1. **Analyze** — Upload PDF, photo, or pasted charges.
-2. **Understand** — See findings next to a live voice/text guide that focuses exact line items and findings while it speaks.
+2. **Understand** — Review the original bill in a scrollable left workspace while the separately scrollable voice guide stays fixed on the right. As the guide speaks, the bill automatically focuses and overlays the exact line item being discussed.
 3. **Plan** — Get payment context, public assistance leads, and a short action checklist.
 
 ---
@@ -45,9 +47,9 @@ You may submit to multiple tracks. CareCounter is built to compete in:
 
 ## Demo flow (for judges)
 
-1. Open the app → upload a synthetic bill from `sampledata/` (or paste charges).
-2. Land on **Understand**: findings + charges on the left; start the billing guide on the right.
-3. Ask about a flagged charge — the guide should **highlight** the matching target (ID-based focus, not transcript guessing).
+1. Open [carecounterai.health](https://carecounterai.health) → upload a synthetic bill from `sampledata/` (or paste charges).
+2. Land on **Understand**: the document, synchronized overlays, and next steps scroll on the left; the billing guide remains fixed and independently scrollable on the right.
+3. Ask about a flagged charge — the guide should **focus and highlight** the exact matching bill target (ID-based focus, not transcript guessing).
 4. Open **Plan** for next steps, assistance leads, and checklist.
 5. Optional: switch guide language via the language selector.
 
@@ -66,13 +68,61 @@ Synthetic fixtures (not real patient records):
 - **Bright Data** — offline public-data ingest
 - **ElevenLabs** — conversational billing guide
 - **Zod** — shared contracts in `src/types/contracts.ts`
+- **Vercel** — GitHub-connected Next.js production hosting and custom-domain TLS
+
+---
+
+## Production deployment
+
+CareCounter is deployed from GitHub to Vercel:
+
+| Item | Current production configuration |
+| --- | --- |
+| Source repository | [`rnbz23/CareCounter.Ai`](https://github.com/rnbz23/CareCounter.Ai) |
+| Production branch | `main` |
+| Vercel project | `carecounterai/carecounter-ai` |
+| Primary URL | [https://carecounterai.health](https://carecounterai.health) |
+| Additional URL | [https://www.carecounterai.health](https://www.carecounterai.health) |
+| Vercel URL | [https://carecounter-ai.vercel.app](https://carecounter-ai.vercel.app) |
+| Deployment trigger | Every push/merge to `main` |
+
+The custom domain remains registered at Porkbun and uses these Vercel-provided DNS records:
+
+| Type | Host | Value |
+| --- | --- | --- |
+| `A` | `@` | `216.198.79.1` |
+| `A` | `@` | `64.29.17.1` |
+| `CNAME` | `www` | `afbc59203def2919.vercel-dns-017.com` |
+
+### Verified production checks
+
+Verified against the deployed application on November 15, 2026:
+
+- `GET /` returned HTTP `200` on the apex, `www`, and Vercel domains.
+- A synthetic text bill passed through Gemini extraction (`POST /api/analyze`, HTTP `201`).
+- The resulting analysis reloaded from Neon with the same ID and total (HTTP `200`).
+- The protected ElevenLabs server-tool context path returned HTTP `200` with the configured secret.
+- Bright Data remains outside the live request path and is used only by the offline ingest script.
+
+### Deploying updates
+
+Vercel automatically creates a preview deployment for non-production branches. Merge a tested pull request into `main` to deploy production:
+
+```bash
+git switch -c feature/my-change
+git add .
+git commit -m "Describe the change"
+git push -u origin feature/my-change
+```
+
+After merging the pull request, verify the production deployment in Vercel and smoke-test [carecounterai.health](https://carecounterai.health). Environment-variable changes apply only to a new deployment, so redeploy after changing them.
 
 ---
 
 ## Quick start
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
 # fill credentials (table below)
 
@@ -88,14 +138,22 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Never commit secrets or expose server keys as `NEXT_PUBLIC_*`.
 
-| Variable | Purpose |
-| --- | --- |
-| `GEMINI_API_KEY` / `GEMINI_MODEL` | Bill extraction (server-only) |
-| `DATABASE_URL` / `DATABASE_URL_UNPOOLED` | Neon pooled app URL + direct URL for migrations |
-| `BRIGHTDATA_API_KEY` / `BRIGHTDATA_UNLOCKER_ZONE` | Offline public-data ingest only |
-| `NEXT_PUBLIC_USE_MOCK_ANALYSIS` | Must be `false` for live APIs |
-| `NEXT_PUBLIC_ELEVENLABS_AGENT_ID` | Public agent id (browser) |
-| `ELEVENLABS_TOOL_SECRET` | Server secret for `POST /api/agent/tools` |
+| Variable | Exposure | Purpose |
+| --- | --- | --- |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | Server only | Gemini bill extraction |
+| `DATABASE_URL` / `DATABASE_URL_UNPOOLED` | Server only | Neon pooled application traffic + direct migration connection |
+| `BRIGHTDATA_API_KEY` / `BRIGHTDATA_UNLOCKER_ZONE` | Server only, offline | Public-data ingest; not required by the live web request path |
+| `NEXT_PUBLIC_USE_MOCK_ANALYSIS` | Browser visible | Must be exactly `false` for live APIs |
+| `NEXT_PUBLIC_ELEVENLABS_AGENT_ID` | Browser visible | Public ElevenLabs agent ID |
+| `ELEVENLABS_TOOL_SECRET` | Server only | Protects `POST /api/agent/tools` via `X-Agent-Tool-Secret` |
+
+For Vercel Production, configure every variable above except the Bright Data pair, which is only needed where `npm run ingest:public-data` is executed. If the ElevenLabs dashboard uses the protected server tool, set its endpoint to:
+
+```text
+https://carecounterai.health/api/agent/tools
+```
+
+Configure the same server secret in its `X-Agent-Tool-Secret` request header. Never place this secret in a `NEXT_PUBLIC_*` variable.
 
 ### Scripts
 
@@ -122,7 +180,7 @@ Never commit secrets or expose server keys as `NEXT_PUBLIC_*`.
 
 | Member | Focus |
 | --- | --- |
-| Sahil (SG2407) | Intake UI, analysis workspace, focus/highlight, VoicePanel shell |
+| Sahil (SG2407) | Intake UI, two-pane analysis workspace, document overlays/highlighting, VoicePanel shell |
 | Raja | Analyze APIs, Gemini, pricing, Neon, public-data ingest |
 | Sumedh | ElevenLabs `AgentRuntime`, insurance/assistance logic, agent tools |
 
