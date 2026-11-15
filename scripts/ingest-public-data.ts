@@ -47,8 +47,18 @@ async function main(): Promise<void> {
   const foundCodes = new Set(snapshot.map(({ price }) => price.code));
   const missingCodes = SELECTED_CPT_CODES.filter((code) => !foundCodes.has(code));
 
+  if (foundCodes.size === 0) {
+    throw new Error("Price file did not contain any selected codes.");
+  }
+
   if (missingCodes.length > 0) {
-    throw new Error(`Price file did not contain selected codes: ${missingCodes.join(", ")}`);
+    console.warn(
+      JSON.stringify({
+        event: "public_price_codes_missing",
+        missingCodes,
+        note: "Continuing with codes that were found in the Sharp file.",
+      }),
+    );
   }
 
   await savePublicPriceSnapshot(snapshot);
@@ -58,6 +68,8 @@ async function main(): Promise<void> {
       event: "public_price_snapshot_saved",
       hospital: SHARP_MEMORIAL_LOCATION,
       codeCount: foundCodes.size,
+      foundCodes: [...foundCodes].sort(),
+      missingCodes,
       priceRecordCount: snapshot.length,
       publicResourceCount: resourceEvidence.length,
     }),

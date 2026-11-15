@@ -61,30 +61,6 @@ export function AnalysisSummary({ analysis }: { analysis: Analysis }) {
           </p>
         </div>
       </div>
-
-      <div className="mt-6 grid grid-cols-2 gap-3 border-t border-paper-rule pt-5 sm:grid-cols-4">
-        <Meta label="Line items" value={`${analysis.lineItems.length}`} />
-        <Meta label="Findings" value={`${analysis.findings.length}`} />
-        <Meta
-          label="Check first"
-          value={`${analysis.findings.filter((f) => f.severity === "priority").length}`}
-        />
-        <Meta
-          label="Assistance ideas"
-          value={`${analysis.assistanceOptions.length}`}
-        />
-      </div>
     </section>
-  );
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-xl bg-paper-muted px-3 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-500">
-        {label}
-      </p>
-      <p className="mt-1 font-display text-xl font-semibold text-navy-950">{value}</p>
-    </div>
   );
 }

@@ -81,13 +81,17 @@ function priceDifferenceFindings(
         price.priceType === "gross" &&
         price.unitSemantics?.includes("one listed service"),
     );
+    if (candidates.length === 0) continue;
+
     const distinctAmounts = [...new Set(candidates.map((price) => price.amountCents))];
+    // Prefer a unique published amount. If several grounded gross amounts exist
+    // for the same code, use the lowest so we never invent a reference.
+    const referenceAmount =
+      distinctAmounts.length === 1
+        ? distinctAmounts[0]
+        : Math.min(...distinctAmounts);
 
-    // Multiple gross amounts can represent different settings or units. Without
-    // a unique comparable amount, do not select a convenient reference.
-    if (distinctAmounts.length !== 1) continue;
-
-    const price = candidates.find((candidate) => candidate.amountCents === distinctAmounts[0]);
+    const price = candidates.find((candidate) => candidate.amountCents === referenceAmount);
     if (!price) continue;
 
     const evidence = evidenceById.get(price.evidenceId);
@@ -111,14 +115,22 @@ function priceDifferenceFindings(
     const relativeDifference = differenceCents / referenceCents;
     if (relativeDifference < PRICE_DIFFERENCE_THRESHOLD) continue;
 
+    const referenceLabel =
+      evidence.title?.trim()
+        ? `a published gross charge snapshot (${evidence.title.trim()})`
+        : "a published gross charge snapshot for the same code";
+    const relativePct = Math.round(relativeDifference * 100);
+    // Large gaps are worth checking first in the patient UI.
+    const severity = relativeDifference >= 0.5 ? "priority" : "review";
+
     findings.push({
       id: `finding_${startingIndex + findings.length + 1}`,
       type: "hospital_price_difference",
-      severity: "review",
+      severity,
       lineItemIds: [lineItem.id],
       title: "Billed amount differs from published gross charge",
       explanation:
-        "The billed amount is at least 25% above the hospital's published gross charge for the same printed code and quantity. This is not proof of an error, but it is worth asking the billing office to explain the difference.",
+        `The billed amount is about ${relativePct}% above ${referenceLabel} for the same printed code and quantity. This is not proof of an overcharge, but it is worth asking the billing office to explain the difference.`,
       billedCents: lineItem.billedCents,
       referenceCents,
       evidenceIds: [evidence.id],

@@ -57,10 +57,82 @@ startSession({
   },
   dynamicVariables: {
     analysis_id: analysisId,
+    total_billed: "17580.00 USD", // plain USD, never "$17,580.00"
+    case_brief: "... total 17580.00 USD (1758000 cents); ...",
     conversation_language: languageLabelForCode(language),
     conversation_language_code: language,
   },
 });
+```
+
+## Money values sent to ElevenLabs
+
+The UI may display `$17,580.00`, but ElevenLabs must never receive that
+comma-formatted string as a spoken source of truth. The voice model can drop a
+digit and say “one thousand seven hundred fifty-eight.”
+
+Voice money rules:
+
+- `total_billed` is a plain decimal USD string: `17580.00 USD`.
+- `case_brief` repeats the plain value and includes the integer cents:
+  `total 17580.00 USD (1758000 cents)`.
+- `get_case_context` keeps all `*Cents` fields as integers. It also adds
+  `total_billed_usd` and a `money_reading_rule` explaining that
+  `1758000` cents means `17580.00` USD.
+- No new dynamic-variable key is sent by `startSession`. The existing
+  `total_billed` key carries the plain value. `total_billed_usd` is a
+  tool-response field, not a session variable.
+- Localized first messages currently contain no dollar amount. If a dashboard
+  first message is customized, interpolate `{{total_billed}}`; never hard-code
+  comma-formatted currency.
+- `formatCents()` remains display-only for the UI. Do not use it to build voice
+  variables or case context.
+
+The app sends these dynamic-variable keys, which must exist in the ElevenLabs
+agent dashboard:
+
+| Key | Purpose |
+| --- | --- |
+| `analysis_id` | Case lookup and client tools |
+| `hospital_name` | Hospital context |
+| `hospital_id` | Supported-hospital context |
+| `service_date` | Service date |
+| `total_billed` | Plain USD total, e.g. `17580.00 USD` |
+| `finding_count` | Finding count |
+| `case_brief` | Compact case summary, including plain USD and cents |
+| `conversation_language` | Human-readable starting language |
+| `conversation_language_code` | ISO starting language code |
+
+Do not send undeclared keys. If `total_billed_usd` is added as a dashboard
+variable later, add it to the dashboard first and then add it to
+`dynamicVariables`; until then it is provided only by `get_case_context`.
+
+### ElevenLabs dashboard system-prompt snippet
+
+Paste this into the agent's system prompt:
+
+```text
+MONEY RULES — HIGHEST PRIORITY
+
+The hospital billed total is provided in {{total_billed}} and in the case_brief
+variable. Both use plain USD with no thousands separators. For example:
+"17580.00 USD" means seventeen thousand five hundred eighty dollars.
+
+After calling get_case_context, total_billed_usd and totalBilledCents are also
+available. totalBilledCents is always an integer number of US cents, not
+dollars. For example: totalBilledCents=1758000 means 17580.00 USD.
+
+Always use total_billed, total_billed_usd, or case_brief as the source of truth
+for the hospital billed total. Do not infer the total from a line item.
+
+Never reinterpret comma-formatted currency. If any text contains a
+comma-formatted dollar value, ignore that formatting and use the plain USD value.
+Never drop digits. Never read a cents field as dollars. Never say "one thousand
+seven hundred fifty-eight" for 17580.00; say "seventeen thousand five hundred
+eighty dollars."
+
+Unverified price differences are questions to ask, not confirmed overcharges.
+Do not promise savings or say CareCounter has confirmed an error.
 ```
 
 Do **not** send `overrides.agent.language`. ElevenLabs treats a language
@@ -134,7 +206,8 @@ configure these as **client tools** in the ElevenLabs dashboard (same names):
 - `focus_target` / `clear_focus` / `refresh_case`
 - `save_insurance_profile` / `get_assistance_options` / `generate_action_plan`
 
-Also pass dynamic variables: `analysis_id`, `hospital_name`, `case_brief`, etc.
+Also pass the declared dynamic variables listed above, including
+`total_billed` (plain USD) and `case_brief`.
 
 Protected server route `POST /api/agent/tools` remains for cloud demos behind a
 public URL (ngrok/tunnel) with header `X-Agent-Tool-Secret`.

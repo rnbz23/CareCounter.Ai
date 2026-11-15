@@ -164,6 +164,7 @@ describe("compareBill", () => {
       expect.objectContaining({
         id: "finding_1",
         type: "hospital_price_difference",
+        severity: "review",
         lineItemIds: ["li_1"],
         billedCents: 95_000,
         referenceCents: 71_000,
@@ -171,6 +172,42 @@ describe("compareBill", () => {
       }),
     ]);
     expect(comparison.evidence).toEqual([priceEvidence()]);
+  });
+
+  it("marks large gaps as priority and uses the lowest grounded amount when several exist", () => {
+    const bill = extraction([
+      lineItem({
+        id: "li_1",
+        code: "71046",
+        description: "Chest X-ray, two views",
+        billedCents: 148_000,
+      }),
+    ]);
+    const higher = grossPrice({
+      id: "price_71046_gross_high",
+      amountCents: 110_000,
+      evidenceId: "evidence_71046_gross_high",
+    });
+    const higherEvidence = priceEvidence({
+      id: "evidence_71046_gross_high",
+      amountCents: 110_000,
+    });
+
+    const comparison = compareBill(
+      bill,
+      [higher, grossPrice()],
+      [higherEvidence, priceEvidence()],
+    );
+
+    expect(comparison.findings).toEqual([
+      expect.objectContaining({
+        type: "hospital_price_difference",
+        severity: "priority",
+        billedCents: 148_000,
+        referenceCents: 71_000,
+        evidenceIds: ["evidence_71046_gross"],
+      }),
+    ]);
   });
 
   it("multiplies a one-service reference by bill quantity", () => {

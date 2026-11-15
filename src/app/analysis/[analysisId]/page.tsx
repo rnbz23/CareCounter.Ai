@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ensureAnalysisFindingsReady } from "@/lib/analysis/ensure-findings";
 import { loadAnalysisForPage } from "@/lib/analysis/load";
 import { AnalysisWorkspace } from "@/components/analysis/AnalysisWorkspace";
 
@@ -20,6 +21,12 @@ export default async function AnalysisPage({
 
   if (!analysis) {
     notFound();
+  }
+
+  try {
+    analysis = await ensureAnalysisFindingsReady(analysis);
+  } catch {
+    // Keep the stored analysis if price refresh fails.
   }
 
   return <AnalysisWorkspace analysis={analysis} />;

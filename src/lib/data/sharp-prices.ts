@@ -11,15 +11,23 @@ import {
 export const SHARP_PRICE_INDEX_URL = "https://www.sharp.com/cms-hpt.txt";
 export const SHARP_MEMORIAL_HOSPITAL_ID = "sharp-memorial-hospital";
 export const SHARP_MEMORIAL_LOCATION = "Sharp Memorial Hospital";
+/** CPT/HCPCS codes pulled from Sharp’s machine-readable file for price checks. */
 export const SELECTED_CPT_CODES = [
   "36415",
   "70450",
   "71046",
+  "71260",
   "72148",
   "76700",
   "80053",
+  "84484",
   "85025",
+  "85027",
   "93005",
+  "93010",
+  "96365",
+  "99223",
+  "E0303",
 ] as const;
 
 type SharpIndexEntry = {
@@ -154,7 +162,12 @@ export async function extractSharpSelectedPrices(input: {
   for await (const rawRow of parser) {
     const row = rawRow as CsvRow;
     const match = selectedCode(row, allowlist);
-    if (!match || row.setting?.trim().toLowerCase() !== "outpatient") continue;
+    const settingNorm = row.setting?.trim().toLowerCase() ?? "";
+    // Outpatient is preferred; inpatient fills gaps for hospital-stay codes
+    // (e.g. initial hospital care, room charges) that never appear as outpatient.
+    if (!match || (settingNorm !== "outpatient" && settingNorm !== "inpatient")) {
+      continue;
+    }
 
     const description = row.description?.trim() || `Code ${match.code}`;
     const setting = row.setting.trim();
@@ -168,7 +181,14 @@ export async function extractSharpSelectedPrices(input: {
 
     for (const [priceType, amountCents] of candidates) {
       const key = `${match.code}:${priceType}`;
-      if (amountCents === null || records.has(key)) continue;
+      if (amountCents === null) continue;
+      const existing = records.get(key);
+      if (existing) {
+        const existingIsOutpatient = existing.price.unitSemantics
+          ?.toLowerCase()
+          .includes("outpatient");
+        if (existingIsOutpatient || settingNorm !== "outpatient") continue;
+      }
       records.set(
         key,
         snapshotRecord({

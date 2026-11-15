@@ -34,6 +34,7 @@ describe("Sharp public price ingestion", () => {
       '"Chest X-ray, two views",71046,CPT,,,,,Outpatient,950.00,522.50',
       '"Comprehensive metabolic panel",80053,CPT,,,,,Inpatient,300.00,165.00',
       '"Comprehensive metabolic panel",80053,CPT,,,,,Outpatient,180.00,99.00',
+      '"Initial hospital care",99223,CPT,,,,,Inpatient,3250.00,1787.50',
       '"Unselected service",99999,CPT,,,,,Outpatient,100.00,55.00',
     ].join("\n");
 
@@ -41,21 +42,54 @@ describe("Sharp public price ingestion", () => {
       stream: Readable.from([csv]),
       sourceUrl: "https://downloads.example.test/sharp.csv",
       retrievedAt: "2026-11-14T00:00:00.000Z",
-      codes: ["71046", "80053"],
+      codes: ["71046", "80053", "99223"],
     });
 
-    expect(records).toHaveLength(4);
+    expect(records).toHaveLength(6);
     expect(
       records.map(({ price }) => ({
         code: price.code,
         priceType: price.priceType,
         amountCents: price.amountCents,
+        unit: price.unitSemantics,
       })),
     ).toEqual([
-      { code: "71046", priceType: "discounted_cash", amountCents: 52_250 },
-      { code: "71046", priceType: "gross", amountCents: 95_000 },
-      { code: "80053", priceType: "discounted_cash", amountCents: 9_900 },
-      { code: "80053", priceType: "gross", amountCents: 18_000 },
+      {
+        code: "71046",
+        priceType: "discounted_cash",
+        amountCents: 52_250,
+        unit: "Outpatient; one listed service",
+      },
+      {
+        code: "71046",
+        priceType: "gross",
+        amountCents: 95_000,
+        unit: "Outpatient; one listed service",
+      },
+      {
+        code: "80053",
+        priceType: "discounted_cash",
+        amountCents: 9_900,
+        unit: "Outpatient; one listed service",
+      },
+      {
+        code: "80053",
+        priceType: "gross",
+        amountCents: 18_000,
+        unit: "Outpatient; one listed service",
+      },
+      {
+        code: "99223",
+        priceType: "discounted_cash",
+        amountCents: 178_750,
+        unit: "Inpatient; one listed service",
+      },
+      {
+        code: "99223",
+        priceType: "gross",
+        amountCents: 325_000,
+        unit: "Inpatient; one listed service",
+      },
     ]);
     expect(records[0].evidence).toMatchObject({
       hospitalId: "sharp-memorial-hospital",
