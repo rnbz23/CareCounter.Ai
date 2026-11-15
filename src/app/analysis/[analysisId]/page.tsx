@@ -25,5 +25,5 @@ export default async function AnalysisPage({
     notFound();
   }
 
-  return <AnalysisWorkspace analysis={analysis} />;
+  return <AnalysisWorkspace key={analysis.id} analysis={analysis} />;
 }

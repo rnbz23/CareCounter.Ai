@@ -18,9 +18,10 @@ const GeminiBillExtractionSchema = BillExtractionSchema.omit({ lineItems: true }
   lineItems: z.array(GeminiLineItemSchema),
 });
 
-const { $schema: _schemaDeclaration, ...GEMINI_RESPONSE_JSON_SCHEMA } = z.toJSONSchema(GeminiBillExtractionSchema, {
+const GEMINI_RESPONSE_JSON_SCHEMA = z.toJSONSchema(GeminiBillExtractionSchema, {
   target: "draft-7",
 });
+delete GEMINI_RESPONSE_JSON_SCHEMA.$schema;
 
 const EXTRACTION_PROMPT = `You are an extraction engine for a hospital billing statement.
 Return only JSON matching the supplied response schema. Do not offer advice.

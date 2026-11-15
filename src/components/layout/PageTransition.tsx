@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -11,20 +11,18 @@ import { cn } from "@/lib/utils";
  */
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [motif, setMotif] = useState<"default" | "doc" | "plan">("default");
+  const motif = pathname.startsWith("/analysis/")
+    ? pathname.endsWith("/plan")
+      ? "plan"
+      : "doc"
+    : "default";
 
   useEffect(() => {
     const from = window.sessionStorage.getItem("cc_enter_from");
     if (pathname.startsWith("/analysis/") && pathname.endsWith("/plan")) {
-      setMotif("plan");
       window.sessionStorage.setItem("cc_enter_from", "plan");
     } else if (pathname.startsWith("/analysis/") && from === "upload") {
-      setMotif("doc");
       window.sessionStorage.removeItem("cc_enter_from");
-    } else if (pathname.startsWith("/analysis/")) {
-      setMotif("doc");
-    } else {
-      setMotif("default");
     }
   }, [pathname]);
 

@@ -30,15 +30,15 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
   const [refreshError, setRefreshError] = useState<string | null>(null);
 
   useEffect(() => {
-    setAnalysis(initialAnalysis);
-  }, [initialAnalysis]);
+    const timer = window.setTimeout(() => {
+      const saved = window.sessionStorage.getItem("cc_language");
+      const savedLanguage = SUPPORTED_LANGUAGES.find((item) => item.code === saved);
+      if (savedLanguage) {
+        setLanguage(savedLanguage.code);
+      }
+    }, 0);
 
-  useEffect(() => {
-    const saved = window.sessionStorage.getItem("cc_language");
-    const savedLanguage = SUPPORTED_LANGUAGES.find((item) => item.code === saved);
-    if (savedLanguage) {
-      setLanguage(savedLanguage.code);
-    }
+    return () => window.clearTimeout(timer);
   }, []);
 
   const languageLabel =
