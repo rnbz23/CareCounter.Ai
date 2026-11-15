@@ -6,6 +6,7 @@ import {
   getAnalysis,
   updateAnalysis,
 } from "@/lib/db/neon";
+import { getGrossPriceReferences } from "@/lib/pricing/references";
 import { LineItemSchema } from "@/types/contracts";
 
 export const runtime = "nodejs";
@@ -64,7 +65,16 @@ export async function PATCH(
       return errorResponse("ANALYSIS_NOT_FOUND", "Analysis not found.", 404);
     }
 
-    const updated = updateAnalysisLineItems(analysis, parsed.data.lineItems);
+    const references = await getGrossPriceReferences(
+      analysis.hospitalId,
+      parsed.data.lineItems,
+    );
+    const updated = updateAnalysisLineItems(
+      analysis,
+      parsed.data.lineItems,
+      references.priceRows,
+      references.evidence,
+    );
     await updateAnalysis(updated);
     return Response.json(updated);
   } catch (error) {

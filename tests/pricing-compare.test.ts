@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { compareBill } from "@/lib/pricing/compare";
-import type { BillExtraction, LineItem } from "@/types/contracts";
+import type { HospitalPriceRow } from "@/lib/db/neon";
+import type { BillExtraction, Evidence, LineItem } from "@/types/contracts";
 
 function lineItem(overrides: Partial<LineItem> = {}): LineItem {
   return {
@@ -24,6 +25,35 @@ function extraction(lineItems: LineItem[]): BillExtraction {
     totalBilledCents: lineItems.reduce((total, item) => total + item.billedCents, 0),
     lineItems,
     notes: [],
+  };
+}
+
+function grossPrice(overrides: Partial<HospitalPriceRow> = {}): HospitalPriceRow {
+  return {
+    id: "price_71046_gross",
+    hospitalId: "sharp-memorial-hospital",
+    code: "71046",
+    priceType: "gross",
+    amountCents: 71_000,
+    unitSemantics: "Outpatient; one listed service",
+    evidenceId: "evidence_71046_gross",
+    ...overrides,
+  };
+}
+
+function priceEvidence(overrides: Partial<Evidence> = {}): Evidence {
+  return {
+    id: "evidence_71046_gross",
+    kind: "hospital_price",
+    title: "Sharp Memorial published gross charge",
+    sourceUrl: "https://example.test/sharp-prices.csv",
+    retrievedAt: "2026-11-15T00:00:00.000Z",
+    hospitalId: "sharp-memorial-hospital",
+    code: "71046",
+    priceType: "gross",
+    amountCents: 71_000,
+    note: null,
+    ...overrides,
   };
 }
 
@@ -116,5 +146,74 @@ describe("compareBill", () => {
       { id: "finding_1", lineItemIds: ["li_1", "li_2"] },
       { id: "finding_2", lineItemIds: ["li_3", "li_4"] },
     ]);
+  });
+
+  it("flags a billed line at least 25% above a grounded gross charge", () => {
+    const bill = extraction([
+      lineItem({
+        id: "li_1",
+        code: "71046",
+        description: "Chest X-ray, two views",
+        billedCents: 95_000,
+      }),
+    ]);
+
+    const comparison = compareBill(bill, [grossPrice()], [priceEvidence()]);
+
+    expect(comparison.findings).toEqual([
+      expect.objectContaining({
+        id: "finding_1",
+        type: "hospital_price_difference",
+        lineItemIds: ["li_1"],
+        billedCents: 95_000,
+        referenceCents: 71_000,
+        evidenceIds: ["evidence_71046_gross"],
+      }),
+    ]);
+    expect(comparison.evidence).toEqual([priceEvidence()]);
+  });
+
+  it("multiplies a one-service reference by bill quantity", () => {
+    const bill = extraction([
+      lineItem({
+        code: "71046",
+        description: "Chest X-ray, two views",
+        quantity: 2,
+        billedCents: 190_000,
+      }),
+    ]);
+
+    const finding = compareBill(bill, [grossPrice()], [priceEvidence()]).findings[0];
+
+    expect(finding.referenceCents).toBe(142_000);
+  });
+
+  it("does not create an ungrounded or category-mismatched price finding", () => {
+    const bill = extraction([
+      lineItem({
+        code: "71046",
+        description: "Chest X-ray, two views",
+        billedCents: 95_000,
+      }),
+    ]);
+    const cashPrice = grossPrice({
+      priceType: "discounted_cash",
+      amountCents: 53_250,
+    });
+
+    expect(compareBill(bill, [grossPrice()], []).findings).toEqual([]);
+    expect(compareBill(bill, [cashPrice], [priceEvidence()]).findings).toEqual([]);
+  });
+
+  it("does not flag a difference below the threshold", () => {
+    const bill = extraction([
+      lineItem({
+        code: "71046",
+        description: "Chest X-ray, two views",
+        billedCents: 88_000,
+      }),
+    ]);
+
+    expect(compareBill(bill, [grossPrice()], [priceEvidence()]).findings).toEqual([]);
   });
 });
