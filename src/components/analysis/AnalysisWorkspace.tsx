@@ -27,8 +27,9 @@ export function AnalysisWorkspace({ analysis }: { analysis: Analysis }) {
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem("cc_language");
-    if (saved === "es" || saved === "zh" || saved === "en") {
-      setLanguage(saved);
+    const savedLanguage = SUPPORTED_LANGUAGES.find((item) => item.code === saved);
+    if (savedLanguage) {
+      setLanguage(savedLanguage.code);
     }
   }, []);
 
