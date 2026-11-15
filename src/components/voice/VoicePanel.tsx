@@ -23,6 +23,7 @@ export type VoicePanelProps = {
   onFocus: (focus: FocusTarget) => string;
   onClearFocus?: () => void;
   onUpdated: () => Promise<void> | void;
+  onConnectionChange?: (connected: boolean) => void;
   compact?: boolean;
 };
 
@@ -33,6 +34,7 @@ export function VoicePanel({
   onFocus,
   onClearFocus,
   onUpdated,
+  onConnectionChange,
   compact = false,
 }: VoicePanelProps) {
   const [expanded, setExpanded] = useState(!compact);
@@ -75,22 +77,22 @@ export function VoicePanel({
         compact ? "max-h-[70vh]" : "",
       )}
     >
-      <div className="relative border-b border-white/10 px-5 py-4 sm:px-6">
+      <div className="relative border-b border-white/10 px-5 py-3.5 sm:px-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7ec8cc]">
               Your Billing Guide
             </p>
-            <h2 className="mt-1 font-display text-xl font-semibold tracking-tight text-white">
+            <h2 className="mt-1 font-display text-lg font-semibold tracking-tight text-white">
               Talk through this bill
             </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-white/70">
-              Choose a language, then start. Text findings stay usable if voice fails.
+            <p className="mt-1.5 text-xs leading-relaxed text-white/65">
+              Start in any language. Switch anytime.
             </p>
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-3">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
             Language · {languageLabel}
           </p>
@@ -107,6 +109,7 @@ export function VoicePanel({
           onFocus={onFocus}
           onUpdated={onUpdated}
           onClearFocus={onClearFocus}
+          onConnectionChange={onConnectionChange}
         />
       </div>
 

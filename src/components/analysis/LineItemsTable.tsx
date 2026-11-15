@@ -52,12 +52,12 @@ export function LineItemsTable({
                     onActivate?.({ targetType: "line_item", targetId: item.id })
                   }
                   className={cn(
-                    "cursor-pointer border-t border-paper-rule transition-colors duration-[180ms]",
+                    "cursor-pointer border-t border-paper-rule transition-[background-color,box-shadow] duration-[180ms] ease-out",
                     focused
-                      ? "bg-[#0f8f96]/10"
+                      ? "bg-[#0f8f96]/12 shadow-[inset_3px_0_0_#0f8f96]"
                       : related
-                        ? "bg-[#0f8f96]/06"
-                        : "hover:bg-paper-muted/80",
+                        ? "bg-[#0f8f96]/06 shadow-[inset_3px_0_0_rgba(15,143,150,0.35)]"
+                        : "hover:bg-[#0f8f96]/[0.055] hover:shadow-[inset_3px_0_0_rgba(15,143,150,0.35)]",
                   )}
                 >
                   <td className="px-4 py-3.5 font-medium text-navy-950">

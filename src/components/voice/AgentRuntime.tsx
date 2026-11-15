@@ -6,7 +6,7 @@
  * Sahil imports this component and owns `activeFocus`/scroll in `onFocus`.
  * This file never touches the DOM and never infers focus from transcript text.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ConversationProvider,
   useConversationClientTool,
@@ -24,7 +24,13 @@ import {
 import { buildAgentContext } from "@/lib/analysis/agent-context";
 import { isValidFocusTarget } from "@/lib/analysis/focus";
 import { formatCents } from "@/lib/format";
-import { SUPPORTED_LANGUAGES, firstMessageForLanguage } from "@/components/intake/LanguageSelector";
+import { patientFindingTitle } from "@/lib/copy/patient";
+import {
+  SUPPORTED_LANGUAGES,
+  firstMessageForLanguage,
+  languageLabelForCode,
+  switchInstructionForLanguage,
+} from "@/components/intake/LanguageSelector";
 
 /** Matches the master-spec interface exactly (four props). */
 export type AgentRuntimeProps = {
@@ -38,7 +44,10 @@ export type AgentRuntimeProps = {
  * Additive, optional extension: the spec requires a clear_focus client tool but
  * its four-prop interface has no clearing callback. Sahil must opt in.
  */
-export type AgentRuntimeOptionalProps = { onClearFocus?: () => void };
+export type AgentRuntimeOptionalProps = {
+  onClearFocus?: () => void;
+  onConnectionChange?: (connected: boolean) => void;
+};
 
 type TranscriptEntry = { id: string; role: "user" | "agent"; text: string };
 
@@ -53,13 +62,60 @@ type TranscriptMessage = {
 type StartSessionOptions = NonNullable<
   Parameters<ReturnType<typeof useConversationControls>["startSession"]>[0]
 >;
-type AgentLanguage = NonNullable<NonNullable<StartSessionOptions["overrides"]>["agent"]>["language"];
 
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
 
-function toAgentLanguage(code: string): AgentLanguage | undefined {
-  const normalized = code.trim().toLowerCase();
-  return /^[a-z]{2}(-[a-z]{2})?$/.test(normalized) ? (normalized as AgentLanguage) : undefined;
+type DiscussionSummary = { kind: string; title: string; detail?: string };
+
+/** Plain-language label for the item the agent is currently explaining. */
+function discussionForFocus(
+  analysis: Analysis,
+  focus: FocusTarget | null,
+): DiscussionSummary | null {
+  if (!focus) return null;
+
+  switch (focus.targetType) {
+    case "finding": {
+      const finding = analysis.findings.find((item) => item.id === focus.targetId);
+      if (!finding) return null;
+      return {
+        kind: "Charge finding",
+        title: patientFindingTitle(finding, analysis.lineItems),
+        detail:
+          finding.billedCents !== null
+            ? `${formatCents(finding.billedCents)} involved`
+            : undefined,
+      };
+    }
+    case "line_item": {
+      const item = analysis.lineItems.find((line) => line.id === focus.targetId);
+      if (!item) return null;
+      return {
+        kind: "Bill charge",
+        title: item.description,
+        detail: [item.code, formatCents(item.billedCents)].filter(Boolean).join(" · "),
+      };
+    }
+    case "assistance": {
+      const option = analysis.assistanceOptions.find((item) => item.id === focus.targetId);
+      if (!option) return null;
+      return { kind: "Financial assistance", title: option.title };
+    }
+    case "step": {
+      const step = analysis.actionPlan?.steps.find((item) => item.id === focus.targetId);
+      if (!step) return null;
+      return { kind: "Next step", title: step.title, detail: step.instruction };
+    }
+    case "payment":
+      if (!analysis.actionPlan) return null;
+      return {
+        kind: "Payment path",
+        title: "What you may owe",
+        detail: analysis.actionPlan.payment.explanation,
+      };
+    default:
+      return null;
+  }
 }
 
 export function AgentRuntime({
@@ -68,6 +124,7 @@ export function AgentRuntime({
   onFocus,
   onUpdated,
   onClearFocus,
+  onConnectionChange,
 }: AgentRuntimeProps & AgentRuntimeOptionalProps) {
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -107,13 +164,14 @@ export function AgentRuntime({
   }, []);
 
   return (
-    <ConversationProvider key={language} onMessage={handleMessage} onError={handleError} onConnect={() => setError(null)}>
+    <ConversationProvider onMessage={handleMessage} onError={handleError} onConnect={() => setError(null)}>
       <AgentRuntimeControls
         analysis={analysis}
         language={language}
         onFocus={onFocus}
         onUpdated={onUpdated}
         onClearFocus={onClearFocus}
+        onConnectionChange={onConnectionChange}
         transcript={transcript}
         error={error}
         setError={setError}
@@ -137,6 +195,7 @@ function AgentRuntimeControls({
   onFocus,
   onUpdated,
   onClearFocus,
+  onConnectionChange,
   transcript,
   error,
   setError,
@@ -149,7 +208,13 @@ function AgentRuntimeControls({
 
   const [starting, setStarting] = useState(false);
   const [input, setInput] = useState("");
+  const [discussing, setDiscussing] = useState<FocusTarget | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+
+  const discussion = useMemo(
+    () => discussionForFocus(analysis, discussing),
+    [analysis, discussing],
+  );
 
   // Keep tool handlers on the latest analysis without requiring a session restart.
   const analysisRef = useRef(analysis);
@@ -168,6 +233,36 @@ function AgentRuntimeControls({
   useEffect(() => {
     onClearFocusRef.current = onClearFocus;
   }, [onClearFocus]);
+
+  useEffect(() => {
+    onConnectionChange?.(status === "connected");
+  }, [onConnectionChange, status]);
+  useEffect(
+    () => () => {
+      onConnectionChange?.(false);
+    },
+    [onConnectionChange],
+  );
+
+  // A target belongs to one call. Do not leave "Now discussing" behind after
+  // the connection ends or errors.
+  useEffect(() => {
+    if (status !== "connected") setDiscussing(null);
+  }, [status]);
+  useEffect(() => {
+    setDiscussing(null);
+  }, [analysis.id]);
+
+  // Changing the selector mid-call must not tear down the conversation.
+  // Send one typed turn so ElevenLabs' language-detection tool switches the
+  // live session to the newly selected language.
+  const previousLanguageRef = useRef(language);
+  useEffect(() => {
+    if (previousLanguageRef.current === language) return;
+    previousLanguageRef.current = language;
+    if (status !== "connected") return;
+    sendUserMessage(switchInstructionForLanguage(language));
+  }, [language, sendUserMessage, status]);
 
   /**
    * Client tools run in the browser. Prefer these over ElevenLabs server/webhook
@@ -195,13 +290,16 @@ function AgentRuntimeControls({
       return "unknown_target";
     }
     try {
-      return onFocusRef.current(parsed.data);
+      const result = onFocusRef.current(parsed.data);
+      if (result === "focused") setDiscussing(parsed.data);
+      return result;
     } catch {
       return "unknown_target";
     }
   });
 
   useConversationClientTool("clear_focus", () => {
+    setDiscussing(null);
     if (!onClearFocusRef.current) return "unsupported";
     onClearFocusRef.current();
     return "cleared";
@@ -352,9 +450,13 @@ function AgentRuntimeControls({
         `${current.lineItems.length} line items; ${current.findings.length} findings` +
         (findingsBrief ? ` (${findingsBrief})` : "");
 
+      // Do NOT send overrides.agent.language here. ElevenLabs locks that
+      // override for the whole call, so the language_detection tool fails with
+      // OverrideError when the caller switches languages. The localized first
+      // message and conversation_language variable set the starting language;
+      // the system tool handles every later change.
       const overrides: StartSessionOptions["overrides"] = {
         agent: {
-          language: toAgentLanguage(language),
           firstMessage: firstMessageForLanguage(language),
         },
       };
@@ -367,9 +469,12 @@ function AgentRuntimeControls({
         total_billed: formatCents(current.totalBilledCents),
         finding_count: String(current.findings.length),
         case_brief: caseBrief,
+        conversation_language: languageLabelForCode(language),
+        conversation_language_code: language,
       };
 
       setTranscript([]);
+      setDiscussing(null);
 
       if (!AGENT_ID) {
         throw new Error("Voice is not configured. Set NEXT_PUBLIC_ELEVENLABS_AGENT_ID.");
@@ -390,6 +495,7 @@ function AgentRuntimeControls({
   }, [analysis.id, language, setError, setTranscript, startSession, status]);
 
   const end = useCallback(() => {
+    setDiscussing(null);
     try {
       endSession();
     } catch {
@@ -420,8 +526,15 @@ function AgentRuntimeControls({
         ? "Connection error"
         : "Ready";
 
+  const latestAgentId = useMemo(() => {
+    for (let index = transcript.length - 1; index >= 0; index -= 1) {
+      if (transcript[index].role === "agent") return transcript[index].id;
+    }
+    return null;
+  }, [transcript]);
+
   return (
-    <div className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="flex h-full min-h-[300px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <header className="border-b border-slate-200 p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -453,6 +566,38 @@ function AgentRuntimeControls({
         ) : null}
       </header>
 
+      {discussion ? (
+        <div
+          className="border-b border-[#0f8f96]/15 bg-[linear-gradient(90deg,#effbf9_0%,#ffffff_100%)] px-4 py-3"
+          aria-live="polite"
+        >
+          <div className="flex items-start gap-2.5">
+            <span
+              aria-hidden="true"
+              className="cc-speaking-dot mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0f8f96]"
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0d737a]">
+                  Now discussing
+                </p>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#0d737a] ring-1 ring-[#0f8f96]/15">
+                  {discussion.kind}
+                </span>
+              </div>
+              <p className="mt-1 text-sm font-semibold leading-snug text-slate-900">
+                {discussion.title}
+              </p>
+              {discussion.detail ? (
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-slate-500">
+                  {discussion.detail}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-label="Live transcript">
         {transcript.length === 0 ? (
           <p className="text-sm text-slate-500">
@@ -461,19 +606,39 @@ function AgentRuntimeControls({
             highlighted on the left.
           </p>
         ) : (
-          transcript.map((entry) => (
-            <div
-              key={`${entry.id}-${entry.text.slice(0, 12)}`}
-              className={`max-w-[92%] rounded-xl px-3 py-2 text-sm ${
-                entry.role === "agent"
-                  ? "bg-slate-100 text-slate-800"
-                  : "ml-auto bg-teal-700 text-white"
-              }`}
-            >
-              <span className="sr-only">{entry.role === "agent" ? "Guide: " : "You: "}</span>
-              {entry.text}
-            </div>
-          ))
+          transcript.map((entry) => {
+            const isLatestAgent =
+              isConnected && entry.role === "agent" && entry.id === latestAgentId;
+            const isLive = isLatestAgent && isSpeaking;
+            return (
+              <div
+                key={`${entry.id}-${entry.text.slice(0, 12)}`}
+                className={`max-w-[92%] rounded-xl border px-3 py-2 text-sm transition-[background-color,box-shadow,border-color] duration-300 ${
+                  entry.role === "agent"
+                    ? isLatestAgent
+                      ? `border-[#0f8f96]/20 bg-[#f2fbfa] text-slate-800 ${
+                          isLive
+                            ? "shadow-[0_8px_22px_rgba(15,143,150,0.12)] ring-2 ring-[#0f8f96]/25"
+                            : ""
+                        }`
+                      : "border-transparent bg-slate-100 text-slate-800"
+                    : "ml-auto border-transparent bg-teal-700 text-white"
+                }`}
+              >
+                {isLive ? (
+                  <span className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d737a]">
+                    <span
+                      aria-hidden="true"
+                      className="cc-speaking-dot h-1.5 w-1.5 rounded-full bg-[#0f8f96]"
+                    />
+                    Speaking now
+                  </span>
+                ) : null}
+                <span className="sr-only">{entry.role === "agent" ? "Guide: " : "You: "}</span>
+                {entry.text}
+              </div>
+            );
+          })
         )}
         <div ref={transcriptEndRef} />
       </div>
@@ -497,8 +662,9 @@ function AgentRuntimeControls({
           {!isConnected && !isBusy ? (
             <button
               type="button"
+              data-cursor="button"
               onClick={start}
-              className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+              className="cc-pressable rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
             >
               Start conversation
             </button>
@@ -518,16 +684,18 @@ function AgentRuntimeControls({
             <>
               <button
                 type="button"
+                data-cursor="button"
                 onClick={() => setMuted(!isMuted)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="cc-pressable rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                 aria-pressed={isMuted}
               >
                 {isMuted ? "Unmute" : "Mute"}
               </button>
               <button
                 type="button"
+                data-cursor="button"
                 onClick={end}
-                className="rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                className="cc-pressable rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-400 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
               >
                 End
               </button>
@@ -555,9 +723,10 @@ function AgentRuntimeControls({
           />
           <button
             type="button"
+            data-cursor="button"
             onClick={sendTyped}
             disabled={!isConnected || input.trim().length === 0}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 enabled:hover:bg-slate-50 disabled:text-slate-400"
+            className="cc-pressable rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 enabled:hover:border-slate-400 enabled:hover:bg-slate-50 disabled:text-slate-400"
           >
             Send
           </button>

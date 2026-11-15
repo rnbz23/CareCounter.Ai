@@ -52,8 +52,8 @@ export function CustomCursor() {
   const [visible, setVisible] = useState(false);
   const ringRef = useRef<HTMLDivElement>(null);
   const pos = useRef({ x: 0, y: 0 });
-  const drawn = useRef({ x: 0, y: 0 });
   const raf = useRef<number | null>(null);
+  const modeRef = useRef<CursorMode>("default");
 
   useEffect(() => {
     const sync = () => setEnabled(canUseCustomCursor());
@@ -76,31 +76,39 @@ export function CustomCursor() {
 
     document.documentElement.classList.add("cc-cursor-on");
 
+    const paint = () => {
+      raf.current = null;
+      if (ringRef.current) {
+        ringRef.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0) translate(-50%, -50%)`;
+      }
+    };
+
+    const schedule = () => {
+      if (raf.current === null) raf.current = requestAnimationFrame(paint);
+    };
+
     const onMove = (event: PointerEvent) => {
+      // Follow the pointer directly. Interpolating the ring made it feel
+      // disconnected from the target, especially over small controls.
       pos.current = { x: event.clientX, y: event.clientY };
       setVisible(true);
-      setMode(resolveMode(event.target));
+      const nextMode = resolveMode(event.target);
+      if (nextMode !== modeRef.current) {
+        modeRef.current = nextMode;
+        setMode(nextMode);
+      }
+      schedule();
     };
 
     const onLeave = () => setVisible(false);
     const onDown = () => setPressed(true);
     const onUp = () => setPressed(false);
 
-    const tick = () => {
-      // Light lerp keeps motion smooth without noticeable lag.
-      drawn.current.x += (pos.current.x - drawn.current.x) * 0.42;
-      drawn.current.y += (pos.current.y - drawn.current.y) * 0.42;
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate3d(${drawn.current.x}px, ${drawn.current.y}px, 0) translate(-50%, -50%)`;
-      }
-      raf.current = requestAnimationFrame(tick);
-    };
-
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("pointerup", onUp, { passive: true });
     document.addEventListener("mouseleave", onLeave);
-    raf.current = requestAnimationFrame(tick);
+    raf.current = requestAnimationFrame(paint);
 
     return () => {
       document.documentElement.classList.remove("cc-cursor-on");

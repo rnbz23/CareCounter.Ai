@@ -50,9 +50,9 @@ const config: Config = {
           950: "#151921",
         },
         paper: {
-          DEFAULT: "#f7f8fb",
-          muted: "#eef1f6",
-          rule: "#dde3ec",
+          DEFAULT: "#f6faf7",
+          muted: "#ebf3ef",
+          rule: "#d9e6e1",
         },
       },
       fontFamily: {
@@ -71,7 +71,7 @@ const config: Config = {
       keyframes: {
         "page-in": {
           "0%": { opacity: "0", transform: "translateY(18px) scale(0.985)" },
-          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+          "100%": { opacity: "1", transform: "none" },
         },
       },
       animation: {

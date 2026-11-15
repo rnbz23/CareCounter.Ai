@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, FileText, ImageIcon, Upload } from "lucide-react";
 import { submitBillForAnalysis } from "@/lib/api/analysis";
+import { AUTO_HOSPITAL_ID, KNOWN_HOSPITALS } from "@/lib/data/hospitals";
 import { LanguageSelector, type LanguageCode } from "./LanguageSelector";
 import { DocumentStage } from "./DocumentStage";
 import { Pressable } from "@/components/motion/Pressable";
@@ -34,7 +35,7 @@ export function UploadCard() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("");
   const [language, setLanguage] = useState<LanguageCode>("en");
-  const [hospitalId, setHospitalId] = useState("sharp-memorial-hospital");
+  const [hospitalId, setHospitalId] = useState(AUTO_HOSPITAL_ID);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -99,12 +100,12 @@ export function UploadCard() {
           ? {
               kind: "text",
               text: text.trim(),
-              hospitalId: hospitalId === "auto" ? undefined : hospitalId,
+              hospitalId,
             }
           : {
               kind: "file",
               file: file!,
-              hospitalId: hospitalId === "auto" ? undefined : hospitalId,
+              hospitalId,
             },
       );
 
@@ -134,7 +135,7 @@ export function UploadCard() {
   return (
     <div
       data-cursor="card"
-      className="cc-surface relative w-full overflow-hidden rounded-[1.6rem] p-5 transition duration-[220ms] hover:-translate-y-0.5 hover:shadow-lift sm:p-7"
+      className="cc-upload-card relative w-full rounded-[1.6rem] p-5 transition duration-[220ms] hover:-translate-y-0.5 hover:shadow-lift sm:p-7"
     >
       <div className="relative mb-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0d737a]">
@@ -190,9 +191,16 @@ export function UploadCard() {
             onChange={(e) => setHospitalId(e.target.value)}
             className="cc-select w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm outline-none"
           >
-            <option value="sharp-memorial-hospital">Sharp Memorial Hospital</option>
-            <option value="auto">Auto-detect (no price match)</option>
+            <option value={AUTO_HOSPITAL_ID}>Auto-detect from bill</option>
+            {KNOWN_HOSPITALS.map((hospital) => (
+              <option key={hospital.id} value={hospital.id}>
+                {hospital.label}
+              </option>
+            ))}
           </select>
+          <span className="mt-1.5 block text-[10px] leading-snug text-ink-400">
+            Price comparison is available for supported hospitals only.
+          </span>
         </label>
       </div>
 
@@ -301,7 +309,7 @@ export function UploadCard() {
         className={cn(
           "mt-5 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3.5 text-sm font-semibold text-white",
           canSubmit
-            ? "bg-brand-600 hover:bg-brand-700"
+            ? "cc-primary"
             : "bg-ink-300",
         )}
       >

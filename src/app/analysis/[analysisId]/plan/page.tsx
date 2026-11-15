@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAnalysis } from "@/lib/db/neon";
+import { loadAnalysisForPage } from "@/lib/analysis/load";
 import { formatCents, formatDate } from "@/lib/format";
 import {
   assistanceStatusLabel,
@@ -27,7 +27,7 @@ export default async function PlanPage({
 
   let analysis;
   try {
-    analysis = await getAnalysis(analysisId);
+    analysis = await loadAnalysisForPage(analysisId);
   } catch {
     notFound();
   }

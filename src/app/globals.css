@@ -3,10 +3,33 @@
 @tailwind utilities;
 
 :root {
-  --cc-bg: #e9edf4;
-  --cc-ink: #151921;
+  --cc-bg: #edf4f1;
+  --cc-ink: #14211f;
   --cc-accent: #e4572e;
-  --cc-navy: #1b2a41;
+  --cc-navy: #0b2630;
+  --cc-teal: #0f8f96;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html.cc-intro-lock,
+html.cc-intro-lock body {
+  overflow: hidden;
+}
+
+html.cc-stage-lock,
+html.cc-stage-lock body {
+  overflow: hidden;
+}
+
+/* A finished page-transition animation still creates a containing block for
+   fixed children. The conversation stage must be relative to the viewport. */
+html.cc-stage-lock .cc-doc-enter,
+html.cc-stage-lock .animate-page-in,
+html.cc-stage-lock .cc-page-sweep {
+  transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -27,14 +50,14 @@ body {
 body {
   color: var(--cc-ink);
   background:
-    radial-gradient(900px 480px at 8% -10%, rgba(228, 87, 46, 0.12), transparent 55%),
-    radial-gradient(760px 420px at 100% 0%, rgba(27, 42, 65, 0.12), transparent 50%),
-    linear-gradient(180deg, #f7f8fb 0%, #e9edf4 45%, #e4e9f2 100%);
+    radial-gradient(1100px 620px at 4% -8%, rgba(15, 143, 150, 0.16), transparent 60%),
+    radial-gradient(860px 520px at 100% -4%, rgba(228, 87, 46, 0.1), transparent 56%),
+    linear-gradient(180deg, #f8fbfa 0%, #eef5f2 48%, #e8f0ed 100%);
   background-attachment: fixed;
 }
 
 ::selection {
-  background: rgba(228, 87, 46, 0.2);
+  background: rgba(15, 143, 150, 0.2);
 }
 
 @layer components {
@@ -97,10 +120,14 @@ html.cc-cursor-on * {
 
 html.cc-cursor-on input,
 html.cc-cursor-on textarea,
-html.cc-cursor-on select,
 html.cc-cursor-on [contenteditable="true"],
 html.cc-cursor-on [contenteditable=""] {
   cursor: text !important;
+}
+
+html.cc-cursor-on select,
+html.cc-cursor-on option {
+  cursor: pointer !important;
 }
 
 @media (pointer: coarse), (hover: none) {
@@ -117,11 +144,11 @@ html.cc-cursor-on [contenteditable=""] {
   }
 
   .cc-surface {
-    background: linear-gradient(165deg, #ffffff 0%, #f4f6fa 100%);
-    border: 1px solid rgba(213, 218, 227, 0.95);
+    background: linear-gradient(165deg, #ffffff 0%, #f3f8f5 100%);
+    border: 1px solid rgba(207, 224, 218, 0.95);
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.95) inset,
-      0 18px 48px rgba(21, 25, 33, 0.07);
+      0 18px 48px rgba(11, 59, 63, 0.08);
   }
 
   .cc-amount {
@@ -347,7 +374,7 @@ html.cc-cursor-on [contenteditable=""] {
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -431,7 +458,7 @@ html.cc-cursor-on [contenteditable=""] {
 }
 
 .cc-doc-enter {
-  animation: cc-doc-to-data 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: cc-doc-to-data 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cc-doc-selected {
@@ -440,6 +467,71 @@ html.cc-cursor-on [contenteditable=""] {
 
 .cc-connector {
   background: linear-gradient(180deg, #0f8f96 0%, transparent 100%);
+}
+
+/* Conversation stage: bill and agent arrive together when a call connects. */
+.cc-conversation-stage {
+  animation: cc-stage-in 260ms ease-out both;
+}
+
+.cc-bill-stage {
+  animation: cc-bill-enter 600ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+.cc-agent-stage {
+  animation: cc-agent-enter 600ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
+}
+
+.cc-bill-line-active,
+.cc-bill-total-active {
+  animation: cc-bill-line-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes cc-stage-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cc-bill-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-36px) rotate(-0.8deg) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes cc-agent-enter {
+  from {
+    opacity: 0;
+    transform: translateX(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes cc-bill-line-pulse {
+  0%,
+  100% {
+    background-color: rgba(15, 143, 150, 0.1);
+    box-shadow:
+      inset 3px 0 0 #0f8f96,
+      0 0 0 0 rgba(15, 143, 150, 0);
+  }
+  50% {
+    background-color: rgba(15, 143, 150, 0.17);
+    box-shadow:
+      inset 3px 0 0 #0f8f96,
+      0 0 0 4px rgba(15, 143, 150, 0.08);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -452,5 +544,318 @@ html.cc-cursor-on [contenteditable=""] {
   .cc-page-sweep::after,
   .cc-shimmer {
     animation: none !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Landing theme + brand intro                                                */
+/* -------------------------------------------------------------------------- */
+
+.cc-hero-aurora {
+  top: -260px;
+  background:
+    radial-gradient(520px 340px at 22% 38%, rgba(15, 143, 150, 0.2), transparent 68%),
+    radial-gradient(480px 300px at 78% 16%, rgba(228, 87, 46, 0.11), transparent 70%),
+    radial-gradient(360px 260px at 58% 72%, rgba(141, 196, 184, 0.18), transparent 70%);
+  filter: blur(12px);
+  animation: cc-aurora-drift 18s ease-in-out infinite alternate;
+}
+
+.cc-hero-grid {
+  background-image:
+    linear-gradient(rgba(11, 59, 63, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 59, 63, 0.055) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 85% 60% at 50% 0%, black 10%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 60% at 50% 0%, black 10%, transparent 78%);
+  opacity: 0.6;
+}
+
+.cc-glass {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(244, 250, 247, 0.66) 100%
+  );
+  border: 1px solid rgba(207, 224, 218, 0.78);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 18px 48px rgba(11, 59, 63, 0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.cc-upload-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, #ffffff 0%, #f5faf7 100%);
+  border: 1px solid rgba(207, 224, 218, 0.95);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 32px 72px rgba(11, 59, 63, 0.11),
+    0 4px 14px rgba(11, 59, 63, 0.04);
+}
+
+.cc-upload-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, #0f8f96 0%, #8dc9be 52%, #e4572e 100%);
+  opacity: 0.9;
+}
+
+.cc-primary {
+  background-image: linear-gradient(110deg, #0f8f96 0%, #0b737a 52%, #0a5d64 100%);
+  background-size: 150% 150%;
+  box-shadow:
+    0 14px 30px rgba(11, 102, 109, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.cc-primary:hover {
+  background-position: 100% 50%;
+  box-shadow:
+    0 18px 36px rgba(11, 102, 109, 0.34),
+    0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.cc-text-gradient {
+  background: linear-gradient(105deg, #0d737a 0%, #0f8f96 46%, #d95833 118%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cc-live-dot {
+  animation: cc-live-dot 2.4s ease-out infinite;
+}
+
+.cc-rise {
+  animation: cc-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cc-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.cc-delay-2 {
+  animation-delay: 0.16s;
+}
+
+.cc-delay-3 {
+  animation-delay: 0.24s;
+}
+
+.cc-delay-4 {
+  animation-delay: 0.32s;
+}
+
+.cc-brand-mark {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Intro overlay */
+.cc-intro {
+  animation: cc-intro-in 0.4s ease both;
+}
+
+.cc-intro-backdrop {
+  background:
+    radial-gradient(680px 520px at 50% 38%, rgba(15, 143, 150, 0.13), transparent 68%),
+    radial-gradient(460px 360px at 18% 82%, rgba(228, 87, 46, 0.08), transparent 70%),
+    linear-gradient(180deg, #f9fcfb 0%, #edf5f1 52%, #e7efec 100%);
+}
+
+.cc-intro-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(11, 59, 63, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 59, 63, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at 50% 45%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at 50% 45%, black 0%, transparent 70%);
+  opacity: 0.55;
+}
+
+.cc-intro-halo {
+  background: radial-gradient(
+    circle,
+    rgba(15, 143, 150, 0.18) 0%,
+    rgba(15, 143, 150, 0.06) 45%,
+    transparent 70%
+  );
+  filter: blur(14px);
+}
+
+.cc-helix-sway {
+  animation: cc-helix-sway 5.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.cc-dna-strand {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: cc-dna-draw 1.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.cc-dna-strand-delayed {
+  animation-delay: 0.14s;
+}
+
+.cc-dna-rung {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cc-dna-rung 1.7s ease-in-out infinite;
+}
+
+.cc-dna-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cc-node-pulse 1.9s ease-in-out infinite;
+}
+
+.cc-dna-scan {
+  top: 0;
+  animation: cc-dna-scan 1.55s ease-in-out infinite;
+}
+
+.cc-mark-arrive {
+  animation: cc-mark-in 0.76s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cc-intro-word {
+  animation: cc-word-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cc-aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(2%, -2%, 0) scale(1.08);
+  }
+}
+
+@keyframes cc-intro-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cc-live-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(15, 143, 150, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(15, 143, 150, 0);
+  }
+}
+
+@keyframes cc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes cc-dna-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes cc-dna-rung {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scaleX(0.62);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes cc-node-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.78);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes cc-dna-scan {
+  0% {
+    transform: translateY(-24px);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(278px);
+    opacity: 0;
+  }
+}
+
+@keyframes cc-helix-sway {
+  0%,
+  100% {
+    transform: rotate(-2.2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2.2deg) translateY(-4px);
+  }
+}
+
+@keyframes cc-mark-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.52) rotate(-10deg);
+    filter: blur(12px);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1.06) rotate(1.5deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes cc-word-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+    letter-spacing: 0.42em;
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    letter-spacing: 0.3em;
   }
 }

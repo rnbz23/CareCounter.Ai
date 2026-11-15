@@ -13,6 +13,7 @@ import {
   type ExtractBillInput,
 } from "@/lib/gemini/extract";
 import { DatabaseError, saveAnalysis } from "@/lib/db/neon";
+import { resolveHospitalId } from "@/lib/data/hospitals";
 import { compareBill } from "@/lib/pricing/compare";
 import { getGrossPriceReferences } from "@/lib/pricing/references";
 
@@ -85,7 +86,8 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const input = await billInput(formData);
     const extraction = await extractBill(input);
-    const hospitalId = stringField(formData, "hospitalId");
+    const selectedHospitalId = stringField(formData, "hospitalId");
+    const hospitalId = resolveHospitalId(selectedHospitalId, extraction.hospitalName);
     const references = await getGrossPriceReferences(hospitalId, extraction.lineItems);
     const comparison = compareBill(
       extraction,

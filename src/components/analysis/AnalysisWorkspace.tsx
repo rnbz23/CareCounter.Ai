@@ -13,6 +13,7 @@ import {
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PageShell } from "@/components/layout/PageShell";
 import { AnalysisSummary } from "./AnalysisSummary";
+import { BillDocument } from "./BillDocument";
 import { FindingCard } from "./FindingCard";
 import { LineItemsTable } from "./LineItemsTable";
 import { AssistanceCard } from "./AssistanceCard";
@@ -28,6 +29,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
   const [language, setLanguage] = useState<LanguageCode>("en");
   const [mobileTab, setMobileTab] = useState<MobileTab>("findings");
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [conversationOpen, setConversationOpen] = useState(false);
 
   useEffect(() => {
     setAnalysis(initialAnalysis);
@@ -67,6 +69,16 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
   const clearFocus = useCallback(() => {
     applyFocusTarget(analysis, null, setActiveFocus);
   }, [analysis]);
+
+  const handleConnectionChange = useCallback((connected: boolean) => {
+    setConversationOpen(connected);
+  }, []);
+
+  useEffect(() => {
+    if (!conversationOpen) return;
+    document.documentElement.classList.add("cc-stage-lock");
+    return () => document.documentElement.classList.remove("cc-stage-lock");
+  }, [conversationOpen]);
 
   const refreshAnalysis = useCallback(async () => {
     try {
@@ -113,7 +125,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
           </p>
         ) : null}
 
-        <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)] lg:gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)]">
+        <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
           <section className="min-h-0 min-w-0 lg:overflow-y-auto lg:pr-1 cc-scrollbar">
             <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
               <LanguageSelector
@@ -125,7 +137,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
               <button
                 type="button"
                 onClick={clearFocus}
-                className="text-xs font-medium text-ink-500"
+                className="text-xs font-medium text-ink-500 transition-colors hover:text-navy-950"
               >
                 Clear highlight
               </button>
@@ -146,10 +158,10 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
                   type="button"
                   onClick={() => setMobileTab(key)}
                   className={cn(
-                    "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     mobileTab === key
                       ? "bg-navy-950 text-white"
-                      : "text-ink-600",
+                      : "text-ink-600 hover:bg-paper-muted hover:text-navy-950",
                   )}
                 >
                   {label}
@@ -175,7 +187,7 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
                 <button
                   type="button"
                   onClick={clearFocus}
-                  className="hidden text-xs font-medium text-ink-500 lg:inline"
+                  className="hidden text-xs font-medium text-ink-500 transition-colors hover:text-navy-950 lg:inline"
                 >
                   Clear highlight
                 </button>
@@ -262,16 +274,47 @@ export function AnalysisWorkspace({ analysis: initialAnalysis }: { analysis: Ana
             </div>
           </section>
 
-          <aside className="hidden min-h-0 min-w-0 lg:block">
-            <div className="h-full min-h-[560px]">
-              <VoicePanel
-                analysis={analysis}
-                language={language}
-                onLanguageChange={setLanguage}
-                onFocus={handleFocus}
-                onClearFocus={clearFocus}
-                onUpdated={refreshAnalysis}
-              />
+          <aside
+            className={cn(
+              "hidden min-h-0 min-w-0 lg:block",
+              conversationOpen &&
+                "cc-conversation-stage fixed inset-0 z-50 bg-[#071a1d]/75 p-3 backdrop-blur-md sm:p-5 lg:p-6",
+            )}
+          >
+            <div
+              className={cn(
+                "h-full min-h-0",
+                conversationOpen
+                  ? "mx-auto grid max-w-[1560px] gap-4 lg:grid-cols-[minmax(0,1fr)_470px] lg:gap-5 xl:grid-cols-[minmax(0,1fr)_560px]"
+                  : "h-[min(620px,calc(100vh-7rem))] min-h-[480px]",
+              )}
+            >
+              <div
+                className={cn(
+                  "min-h-0",
+                  conversationOpen ? "cc-bill-stage" : "hidden",
+                )}
+              >
+                {conversationOpen ? (
+                  <BillDocument analysis={analysis} activeFocus={activeFocus} />
+                ) : null}
+              </div>
+              <div
+                className={cn(
+                  "min-h-0",
+                  conversationOpen ? "cc-agent-stage" : "h-full",
+                )}
+              >
+                <VoicePanel
+                  analysis={analysis}
+                  language={language}
+                  onLanguageChange={setLanguage}
+                  onFocus={handleFocus}
+                  onClearFocus={clearFocus}
+                  onUpdated={refreshAnalysis}
+                  onConnectionChange={handleConnectionChange}
+                />
+              </div>
             </div>
           </aside>
         </div>
