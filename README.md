@@ -6,6 +6,12 @@ CareCounter is a multilingual medical-bill review assistant. It extracts structu
 
 > CareCounter identifies questions a user may want to ask a billing office. It does not determine that a charge is incorrect and does not provide medical, legal, or financial advice.
 
+## Demo video
+
+[![CareCounter demo video](https://img.youtube.com/vi/ZmUHwfL2X5M/maxresdefault.jpg)](https://www.youtube.com/watch?v=ZmUHwfL2X5M)
+
+[Watch on YouTube](https://www.youtube.com/watch?v=ZmUHwfL2X5M)
+
 ## Features
 
 - PDF, image, and text bill intake
