@@ -12,6 +12,14 @@ CareCounter is a multilingual medical-bill review assistant. It extracts structu
 
 [Watch on YouTube](https://www.youtube.com/watch?v=ZmUHwfL2X5M)
 
+## Meet the Creators
+
+Connect with the CareCounter team on LinkedIn.
+
+- [Rajarajendran Anbazhagan](https://www.linkedin.com/in/arajarajendran/)
+- [Sahil Gurjar](https://www.linkedin.com/in/sahilgurjar2407/)
+- [Sumedh Kulkarni](https://www.linkedin.com/in/sumedhkulkarni-/)
+
 ## Features
 
 - PDF, image, and text bill intake

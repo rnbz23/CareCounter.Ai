@@ -13,6 +13,12 @@ const TRUST = [
   { icon: ShieldCheck, label: "No account required" },
 ];
 
+const CREATORS = [
+  { name: "Rajarajendran Anbazhagan", linkedin: "https://www.linkedin.com/in/arajarajendran/" },
+  { name: "Sahil Gurjar", linkedin: "https://www.linkedin.com/in/sahilgurjar2407/" },
+  { name: "Sumedh Kulkarni", linkedin: "https://www.linkedin.com/in/sumedhkulkarni-/" },
+];
+
 export default function HomePage() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-paper">
@@ -125,6 +131,28 @@ export default function HomePage() {
           </div>
         </PageShell>
       </section>
+      <footer className="border-t border-ink-200/80 bg-paper">
+        <PageShell width="wide" className="py-8">
+          <h2 className="font-display text-xl font-semibold text-navy-950">
+            Meet the Creators
+          </h2>
+          <p className="mt-2 text-sm text-ink-600">
+            Connect with the CareCounter team on LinkedIn.
+          </p>
+          <ul className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6">
+            {CREATORS.map(({ name, linkedin }) => (
+              <li key={linkedin}>
+                <a
+                  href={linkedin}
+                  className="text-sm font-medium text-cobalt-700 underline underline-offset-4 hover:text-cobalt-600"
+                >
+                  {name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </PageShell>
+      </footer>
     </div>
   );
 }
